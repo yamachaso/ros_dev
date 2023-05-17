@@ -1,0 +1,2337 @@
+<sdf version='1.6'>
+  <world name='default'>
+    <model name='ground_plane'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>65535</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose frame=''>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name='mytable'>
+      <static>1</static>
+      <link name='link'>
+        <inertial>
+          <mass>100</mass>
+          <inertia>
+            <ixx>0.083</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.083</iyy>
+            <iyz>0</iyz>
+            <izz>0.083</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.4</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.4</size>
+            </box>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>0 -1 0 0 -0 0</pose>
+    </model>
+    <model name='container'>
+      <static>1</static>
+      <link name='link'>
+        <inertial>
+          <mass>100</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://big_container_open/big_container_open_meshlab.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.6</mu>
+                <mu2>0.6</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://big_container_open/big_container_open_meshlab.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 0 0 0 0 -1.57</pose>
+    </model>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <model name='cabbage_1'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.5 0 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_2'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_3'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_4'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_5'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_6'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.5 0 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_7'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_8'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_9'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_10'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_11'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.5 0 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_12'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_13'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_14'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_15'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_16'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.5 0 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_17'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_18'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_19'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.7 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <model name='cabbage_20'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3 -0.2 0.8 0 -0 0</pose>
+    </model>
+    <state world_name='default'>
+      <sim_time>671 764000000</sim_time>
+      <real_time>633 618158497</real_time>
+      <wall_time>1673965635 331948183</wall_time>
+      <iterations>491763</iterations>
+      <model name='cabbage_1'>
+        <pose frame=''>1.57456 0.326071 0.048844 -1.61248 -0.168005 0.040837</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.57456 0.326071 0.048844 -1.61248 -0.168005 0.040837</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.04299 -0.008358 0.000281 0.183713 0.979012 -0.116591</acceleration>
+          <wrench>0.04299 -0.008358 0.000281 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_10'>
+        <pose frame=''>1.22203 0.313648 0.051116 -1.6542 -0.577219 -2.54183</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.22203 0.313648 0.051116 -1.6542 -0.577219 -2.54183</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>2.1e-05 5.9e-05 -3e-06 -0.001194 0.000633 -0.000398</acceleration>
+          <wrench>2.1e-05 5.9e-05 -3e-06 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11'>
+        <pose frame=''>1.46461 0.140466 0.052233 1.66635 -0.021573 -2.61976</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.46461 0.140466 0.052233 1.66635 -0.021573 -2.61976</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0.019155 -0.00691 0.010657 0.142237 -0.353959 -0.280776</acceleration>
+          <wrench>-0.019155 -0.00691 0.010657 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone'>
+        <pose frame=''>1.56824 -0.16939 0.051511 1.57618 0.00873 -2.5711</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.56824 -0.16939 0.051511 1.57618 0.00873 -2.5711</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_0'>
+        <pose frame=''>1.65816 -0.409684 0.051509 1.57621 0.008908 -2.6025</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.65816 -0.409684 0.051509 1.57621 0.008908 -2.6025</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_1'>
+        <pose frame=''>1.48825 -0.331901 0.051511 1.57614 0.008818 -2.75238</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.48825 -0.331901 0.051511 1.57614 0.008818 -2.75238</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_2'>
+        <pose frame=''>1.29432 -0.328083 0.051511 1.57614 0.008845 -2.3996</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.29432 -0.328083 0.051511 1.57614 0.008845 -2.3996</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_3'>
+        <pose frame=''>1.30527 -0.158603 0.05151 1.57625 0.008847 -2.60555</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.30527 -0.158603 0.05151 1.57625 0.008847 -2.60555</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_4'>
+        <pose frame=''>1.30266 -0.505386 0.051496 1.57429 0.009003 2.97629</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.30266 -0.505386 0.051496 1.57429 0.009003 2.97629</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_5'>
+        <pose frame=''>1.19609 -0.413969 0.051447 1.56763 0.00925 -2.63237</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.19609 -0.413969 0.051447 1.56763 0.00925 -2.63237</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_6'>
+        <pose frame=''>1.39952 -0.414486 0.05151 1.5762 0.008865 -2.60944</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.39952 -0.414486 0.05151 1.5762 0.008865 -2.60944</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_7'>
+        <pose frame=''>1.21369 -0.237468 0.051511 1.57596 0.008791 -2.12555</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.21369 -0.237468 0.051511 1.57596 0.008791 -2.12555</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_11_clone_8'>
+        <pose frame=''>1.01019 -0.208659 0.048846 -1.61259 -0.168172 -2.53285</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.01019 -0.208659 0.048846 -1.61259 -0.168172 -2.53285</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.061366 0.002067 -0.000533 -0.047567 1.40099 -0.039092</acceleration>
+          <wrench>0.061366 0.002067 -0.000533 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_12'>
+        <pose frame=''>1.4279 -0.226624 0.048853 -1.66267 -0.171126 -1.74205</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.4279 -0.226624 0.048853 -1.66267 -0.171126 -1.74205</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.020234 0.050962 0.011464 -1.12609 0.469247 -0.411841</acceleration>
+          <wrench>0.020234 0.050962 0.011464 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_13'>
+        <pose frame=''>1.05228 0.534414 0.048854 -1.66158 -0.104835 -2.29005</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.05228 0.534414 0.048854 -1.66158 -0.104835 -2.29005</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.065078 -0.216319 -0.010667 -1.30739 1.4354 -0.277309</acceleration>
+          <wrench>0.065078 -0.216319 -0.010667 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_14'>
+        <pose frame=''>1.64453 0.089011 0.051507 1.57648 0.009044 1.93802</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.64453 0.089011 0.051507 1.57648 0.009044 1.93802</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 -0 -0 0 -0 0</acceleration>
+          <wrench>0 -0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_15'>
+        <pose frame=''>0.997145 0.340501 0.051507 1.57634 0.00908 0.291486</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>0.997145 0.340501 0.051507 1.57634 0.00908 0.291486</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0 -0 -0 0 -0 0</acceleration>
+          <wrench>-0 -0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_16'>
+        <pose frame=''>1.46241 0.035697 0.061396 -2.99728 -0.320412 -2.07833</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.46241 0.035697 0.061396 -2.99728 -0.320412 -2.07833</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.035107 -0.022896 -0.003691 0.2288 0.770083 1.4752</acceleration>
+          <wrench>0.035107 -0.022896 -0.003691 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_17'>
+        <pose frame=''>1.32059 0.243847 0.04885 -1.66244 -0.171643 -0.721896</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.32059 0.243847 0.04885 -1.66244 -0.171643 -0.721896</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>4e-06 8e-06 0 -0.000173 6.4e-05 0.000169</acceleration>
+          <wrench>4e-06 8e-06 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_18'>
+        <pose frame=''>1.04361 0.186456 0.04884 -1.61246 -0.167755 1.83566</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.04361 0.186456 0.04884 -1.61246 -0.167755 1.83566</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-3e-06 2e-06 -1e-06 -3.9e-05 -8.1e-05 -6.5e-05</acceleration>
+          <wrench>-3e-06 2e-06 -1e-06 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_19'>
+        <pose frame=''>1.47272 0.43561 0.059003 0.126666 0.618869 -0.495004</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.47272 0.43561 0.059003 0.126666 0.618869 -0.495004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 -1e-06 2e-06 -7e-06</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_2'>
+        <pose frame=''>1.14025 0.381642 0.051425 1.57519 0.009731 -1.18886</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.14025 0.381642 0.051425 1.57519 0.009731 -1.18886</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.002092 0.001359 0.000572 -0.002901 0.045309 0.234838</acceleration>
+          <wrench>0.002092 0.001359 0.000572 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_20'>
+        <pose frame=''>1.18852 0.210481 0.054291 1.55406 0.320519 -0.712201</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.18852 0.210481 0.054291 1.55406 0.320519 -0.712201</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0.058403 0.015418 -0.001339 -0.384849 -1.38735 -0.693097</acceleration>
+          <wrench>-0.058403 0.015418 -0.001339 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_3'>
+        <pose frame=''>1.30641 -0.011556 0.059003 0.12667 0.61895 -1.55094</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.30641 -0.011556 0.059003 0.12667 0.61895 -1.55094</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 -0 -0 1e-06 2e-06 -7e-06</acceleration>
+          <wrench>0 -0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_4'>
+        <pose frame=''>1.16035 -0.065335 0.051506 1.5765 0.009258 -3.08324</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.16035 -0.065335 0.051506 1.5765 0.009258 -3.08324</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 -0 0 -0 0</acceleration>
+          <wrench>0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_5'>
+        <pose frame=''>1.70587 0.255784 0.051507 1.57631 0.009067 -0.719772</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.70587 0.255784 0.051507 1.57631 0.009067 -0.719772</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0 0 -0 0 -0 0</acceleration>
+          <wrench>-0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_6'>
+        <pose frame=''>1.40607 -0.06014 0.056394 1.96578 -0.366572 1.27755</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.40607 -0.06014 0.056394 1.96578 -0.366572 1.27755</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.149401 -0.089634 0.007892 -1.19905 0.11493 -1.84101</acceleration>
+          <wrench>0.149401 -0.089634 0.007892 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_7'>
+        <pose frame=''>1.05927 0.04365 0.051505 1.57638 0.009409 1.37287</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.05927 0.04365 0.051505 1.57638 0.009409 1.37287</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 -0 -0 0 -0 0</acceleration>
+          <wrench>0 -0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_8'>
+        <pose frame=''>1.23107 0.085201 0.051506 1.57639 0.009341 -0.17715</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.23107 0.085201 0.051506 1.57639 0.009341 -0.17715</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0 -0 -0 0 -0 0</acceleration>
+          <wrench>-0 -0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='cabbage_9'>
+        <pose frame=''>1.29253 0.406218 0.051507 1.57639 0.00912 -0.69345</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.29253 0.406218 0.051507 1.57639 0.00912 -0.69345</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0 0 -0 0 -0 0</acceleration>
+          <wrench>-0 0 -0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='container'>
+        <pose frame=''>1.4 0 0 0 0 -1.57</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.4 0 0 0 0 -1.57</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ground_plane'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='mytable'>
+        <pose frame=''>0 -1 0.1 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>0 -1 0.1 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='sun'>
+        <pose frame=''>0 0 10 0 -0 0</pose>
+      </light>
+    </state>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>0.819851 0.46456 2.83575 7e-06 1.5698 -0.447805</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+    <model name='cabbage_11_clone'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.56691 -0.165026 0.052211 1.66396 -0.020404 -2.59895</pose>
+    </model>
+    <model name='cabbage_11_clone_0'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.65721 -0.405458 0.052211 1.66397 -0.020413 -2.59944</pose>
+    </model>
+    <model name='cabbage_11_clone_1'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.48062 -0.325971 0.052211 1.66402 -0.020434 -2.60019</pose>
+    </model>
+    <model name='cabbage_11_clone_2'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.30299 -0.318544 0.052212 1.66413 -0.020492 -2.60222</pose>
+    </model>
+    <model name='cabbage_11_clone_3'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.30434 -0.154365 0.052213 1.66417 -0.020516 -2.60293</pose>
+    </model>
+    <model name='cabbage_11_clone_4'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.30164 -0.501363 0.052214 1.66428 -0.020573 -2.60437</pose>
+    </model>
+    <model name='cabbage_11_clone_5'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.19483 -0.409343 0.052214 1.6643 -0.020586 -2.60521</pose>
+    </model>
+    <model name='cabbage_11_clone_6'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.3986 -0.410234 0.052214 1.66435 -0.020609 -2.60664</pose>
+    </model>
+    <model name='cabbage_11_clone_7'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.21243 -0.23318 0.052214 1.66437 -0.02062 -2.6077</pose>
+    </model>
+    <model name='cabbage_11_clone_8'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.8</mu>
+                <mu2>0.8</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <max_vel>0.05</max_vel>
+                <min_depth>0.0001</min_depth>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>model://cabbage/cabbage_single.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cabbage/texture.material</uri>
+              <name>CabbageTexture</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame=''>1.11447 -0.31869 0.052214 1.66437 -0.020621 -2.60874</pose>
+    </model>
+  </world>
+</sdf>

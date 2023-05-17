@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- roslaunch urdf_tutorial display.launch model:=$(rospack find myrobot_description)/urdf/test.xacro -->
+<robot name="myrobot" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:include filename="$(find myrobot_description)/urdf/utils.xacro" />
+
+    <link name="world" />
+    <xacro:f_joint name="world_joint" parent="world" child="base_link" />
+
+    <link name="base_link" />
+    <xacro:f_joint name="joint" xyz="0 0 0" parent="base_link" child="box" />
+    <link name="box">
+        <xacro:_box size="0.3 0.3 0.3" xyz="0 0 0.15" />
+    </link>
+    <xacro:f_joint name="joint_1" xyz="0.1 0.1 0.3" parent="box" child="box_1" />
+    <link name="box_1">
+        <xacro:_box size="0.1 0.1 0.3" color="red"/>
+    </link>
+</robot>

@@ -1,0 +1,15 @@
+.vscode
+src/**
+outputs/**
+
+!outputs/melodic
+!outputs/noetic
+!src/melodic
+!src/melodic/**
+!src/noetic
+!src/noetic/**
+!.gitmodules
+src/melodic/detect/
+
+*.pyc
+default_warehouse_mongo_db

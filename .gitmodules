@@ -1,0 +1,13 @@
+[submodule "src/melodic/denso_robot_ros"]
+	path = src/melodic/denso_robot_ros
+	url = git@github.com:yamachaso/denso_robot_ros.git
+	branch = melodic-devel-vs087
+[submodule "src/melodic/realsense2_description"]
+	path = src/melodic/realsense2_description
+	url = git@github.com:issaiass/realsense2_description.git
+[submodule "src/melodic/realsense_gazebo_plugin"]
+	path = src/melodic/realsense_gazebo_plugin
+	url = git@github.com:issaiass/realsense_gazebo_plugin.git
+[submodule "src/noetic/detect"]
+	path = src/noetic/detect
+	url = git@github.com:yamachaso/detect.git
