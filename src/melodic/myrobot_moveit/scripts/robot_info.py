@@ -4,6 +4,8 @@ import sys
 import moveit_commander
 import rospy
 
+# ref: https://robo-marc.github.io/moveit_documents/moveit_commander.html
+
 # メイン
 def main():
     # MoveitCommanderの初期化
@@ -19,6 +21,7 @@ def main():
     print("==Robot Info==")
     print("[ group_names ]"), robot.get_group_names()
     print("[ current_state ] "), robot.get_current_state()
+    print("[ planning_frame ] "), robot.get_planning_frame()
     print("")
 
     # MoveGroupCommanderのインスタンス化
