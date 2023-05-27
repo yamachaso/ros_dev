@@ -7,9 +7,10 @@
     </gazebo>
 
     <xacro:include filename="$(find denso_robot_descriptions)/vs087_description/vs087.urdf.xacro" />
-    <!-- <xacro:include filename="$(find franka_description)/robots/hand.xacro" /> -->
-    <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
-    <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
+
+    <xacro:include filename="$(find franka_description)/robots/common/utils.xacro" />
+    <xacro:include filename="$(find franka_description)/robots/common/franka_hand.xacro"/>
+
     <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
 
     <xacro:macro name="arm_with_hand" params="prefix parent xyz rpy">
@@ -29,7 +30,7 @@
             <child link="${prefix}_base_link" />
         </joint>
         <xacro:vs087 prefix="${prefix}" />
-        <xacro:hand arm_id="${prefix}_panda" connected_to="${prefix}_J6" />
+        <xacro:franka_hand arm_id="${prefix}_panda" connected_to="${prefix}_J6" safety_distance="0.03"/>
         <!-- to add transmission to hand -->
         <xacro:gazebo-joint joint="${prefix}_panda_finger_joint1" transmission="hardware_interface/EffortJointInterface" />
         <xacro:gazebo-joint joint="${prefix}_panda_finger_joint2" transmission="hardware_interface/EffortJointInterface" />
