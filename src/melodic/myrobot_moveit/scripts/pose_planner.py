@@ -18,7 +18,7 @@ def main():
     rospy.init_node("pose_planner")
 
     # eef複数含む場合には、
-    move_group = moveit_commander.MoveGroupCommander("body_and_right_arm") # for open_manipulator
+    move_group = moveit_commander.MoveGroupCommander("right_arm") # for open_manipulator
     # ref: https://answers.ros.org/question/334902/moveit-control-gripper-instead-of-panda_link8-eff/
     # move_group.set_end_effector_link("right_panda_hand_tip")
     print("eef :", move_group.get_end_effector_link())
@@ -28,10 +28,10 @@ def main():
     pose_goal = geometry_msgs.msg.PoseStamped()
     # pose_goal.position = Vector3(0.0, 0.14, 0.3)
     pose_goal.header.frame_id = "world"
-    pose_goal.pose.position = Vector3(1.5, 0, 1)
-    q = tf.transformations.quaternion_from_euler(0, pi / 2, 0)
+    pose_goal.pose.position = Vector3(1.5, -0.2, 0.2)
+    q = tf.transformations.quaternion_from_euler(pi, 0, 0)
     pose_goal.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    move_group.set_pose_target(pose_goal, end_effector_link="right_panda_hand_tip")
+    move_group.set_pose_target(pose_goal, end_effector_link="right_soft_hand_tip")
 
     # 追記：実行可能かの確認
     plan = move_group.plan()
