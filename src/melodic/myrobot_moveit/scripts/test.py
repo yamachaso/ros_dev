@@ -11,7 +11,7 @@ from moveit_msgs.msg import Grasp, PlaceLocation
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Vector3, Quaternion
 from trajectory_msgs.msg import JointTrajectoryPoint
-from myrobot_moveit.msg import DetectedObjectsStamped
+from detect.msg import DetectedObjectsStamped
 from tf.transformations import quaternion_from_euler
 from std_srvs.srv import Empty
 
