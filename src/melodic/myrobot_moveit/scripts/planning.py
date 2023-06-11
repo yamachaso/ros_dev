@@ -28,6 +28,7 @@ class MoveGroup(mc.MoveGroupCommander):
         self.set_support_surface_name(support_surface_name)
         self.set_planning_time(planning_time)
 
+    # ジョイント名をキー, 関節角度値を値とした辞書
     def get_current_joint_dict(self):
         return dict(zip(self.get_active_joints(), self.get_current_joint_values()))
 
