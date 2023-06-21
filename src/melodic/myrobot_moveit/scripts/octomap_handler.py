@@ -28,9 +28,12 @@ if __name__ == "__main__":
 
     fps = rospy.get_param("fps", default=1)
     ns = rospy.get_param("robot_name", default="myrobot")
-    sensors = rospy.get_param("~sensors", default=("left_camera", "right_camera", "body_camera"))
+    sensors = rospy.get_param("/sensors", default=("left_camera", "right_camera", "body_camera"))
 
+    # realsenseノードからpublishされる
     from_topics = ["/{}/{}/depth/color/points".format(ns, sensor_name) for sensor_name in sensors]
+
+    rospy.loginfo("%s", from_topics)
 
     oh = OctomapHandler(from_topics)
 

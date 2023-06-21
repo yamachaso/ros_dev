@@ -2,10 +2,13 @@
 
 ## launch sample
 
-roslaunch myrobot_moveit bringup.launch sim:=false grasp_only:=true pre_move:=true record_all:=true
+<!-- roslaunch myrobot_moveit bringup.launch grasp_only:=true pre_move:=true record_all:=true sim:=false -->
+### Gazebo:
+roslaunch myrobot_moveit bringup.launch used_camera:=right_camera grasp_only:=true
+### 実機:
+roslaunch myrobot_moveit bringup.launch used_camera:=right_camera grasp_only:=true sim:=false
 
-roslaunch myrobot_moveit bringup.launch used_camera:=right_camera grasp_only:=true pre_move:=false sim:=false
-
+### Detect:
 roslaunch detect bringup.launch el_insertion_th:=0 el_contact_th:=0 el_bw_depth_th:=0 angle_for_augment:=30 
 
 subome radius 19 / 2 = 9.5mm
