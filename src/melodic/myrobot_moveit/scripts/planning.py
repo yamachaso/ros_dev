@@ -143,7 +143,7 @@ class MoveGroupHandler:
                 rospy.sleep(5)
             return True
         else:
-            print("pre_move is not completed. grasp will be continued without pre_move.")
+            print("picking failed...")
             return False
 
 
@@ -387,7 +387,6 @@ if __name__ == "__main__":
 
     wait = rospy.get_param("wait_server", default=True)
     use_constraint = rospy.get_param("use_constraint", default=False)
-    pre_move = rospy.get_param("pre_move", default=True)
     manual_wait = rospy.get_param("manual_wait", default=False)
     used_camera = rospy.get_param("used_camera", default="left_camera")
 

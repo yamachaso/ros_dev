@@ -26,8 +26,7 @@
 |fps|1||
 |wait_server|true||
 |use_constraint|false||
-|pre_move|true||
-|grasp_only|false|コンテナでpickをするだけか(falseで台に置くところまでやる)|
+|grasp_only|true|コンテナでpickをするだけか(falseで台に置くところまでやる)|
 |manual_wait|false||
 |used_camera|left_camera||
 |sensors|[right_camera, body_camera]||

@@ -48,8 +48,7 @@
     <arg name="fps" default="1"/>
     <arg name="wait_server" default="true" />
     <arg name="use_constraint" default="false" />
-    <arg name="pre_move" default="true" />
-    <arg name="grasp_only" default="false" />
+    <arg name="grasp_only" default="true" />
     <arg name="manual_wait" default="false" />
     <arg name="used_camera" default="left_camera" />
     <!-- auto octomap update -->
@@ -61,7 +60,6 @@
     <param name="fps" value="$(arg fps)"/>
     <param name="wait_server" value="$(arg wait_server)"/>
     <param name="use_constraint" value="$(arg use_constraint)"/>
-    <param name="pre_move" value="$(arg pre_move)"/>
     <param name="grasp_only" value="$(arg grasp_only)"/>
     <param name="manual_wait" value="$(arg manual_wait)"/>
     <param name="used_camera" value="$(arg used_camera)"/>
