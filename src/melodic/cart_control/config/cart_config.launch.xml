@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <!-- Override ip_address argument -->
-    <arg name="ip_address" default="192.168.11.103" />
+    <arg name="ip_address" default="192.168.11.100" />
     <!-- b-CAP Slave motion control cycle [millisecond] -->
     <arg name="bcap_slave_control_cycle_msec" default="8" />
     <!-- hard coded as Send format == 0, Recieve format == 2 in cart_hw.cpp -->
