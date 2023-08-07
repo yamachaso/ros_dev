@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_name" default="myrobot" />
+  <arg name="paused" default="true" />
+  <arg name="gazebo_gui" default="true" />
+  <arg name="urdf_path" value="$(find myrobot_description)/urdf/$(arg robot_name)_v2.urdf.xacro" />
+  <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" />
+
+  <!-- startup simulated world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- <arg name="world_name" value="$(arg world_path)" /> -->
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="gui" value="$(arg gazebo_gui)" />
+  </include>
+
+  <!-- send robot urdf to param server -->
+  <param name="robot_description" command="xacro $(arg urdf_path)" />
+
+
+  <!-- <include file="$(find myrobot_moveit)/launch/gazebo_depth_converter.launch">
+    <arg name="ns" value="/$(arg robot_name)/body_camera" />
+  </include>
+  <include file="$(find myrobot_moveit)/launch/gazebo_depth_converter.launch">
+    <arg name="ns" value="/$(arg robot_name)/right_camera" />
+  </include>
+  <include file="$(find myrobot_moveit)/launch/gazebo_depth_converter.launch">
+    <arg name="ns" value="/$(arg robot_name)/left_camera" />
+  </include> -->
+
+
+  <!-- push robot_description to factory and spawn robot in gazebo at the origin, change x,y,z arguments to spawn in a different position -->
+  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -unpause -param robot_description -model robot -x 0 -y 0 -z 0 
+    -J joint_body 0.3
+    -J left_joint_sholder 1.221730 -J right_joint_sholder 1.221730
+    -J left_joint_2 1.919862 -J right_joint_2 1.919862 
+    -J left_joint_3 -1.570796 -J right_joint_3 -1.570796 
+    -J left_joint_5 -1.570796 -J right_joint_5 -1.570796
+    " respawn="false" output="screen" />
+
+  <include file="$(find myrobot_v2_moveit_config)/launch/ros_controllers.launch" />
+  
+</launch>

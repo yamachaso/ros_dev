@@ -1,0 +1,132 @@
+<launch>
+    <arg name="robot_name" default="myrobot" />
+    <arg name="sim" default="false" />
+    <arg name="pose" default="true" />
+
+    <!-- for planning_context.launch -->
+    <arg name="load_robot_description" default="true" />
+
+    <!-- for moveit_rviz.launch -->
+    <arg name="rviz_gui" default="true" />
+
+
+    <!-- for move_group.launch  -->
+    <arg name="debug" default="false" />
+
+    <!-- for gazebo.launch -->
+    <arg name="paused" default="true" />
+    <arg name="gazebo_gui" default="true" />
+    <arg name="urdf_path" value="$(find myrobot_description)/urdf/$(arg robot_name)_v2.urdf.xacro" />
+    <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" />
+
+    <!-- for custom_denso_robot_control.launch -->
+    <arg name="ip_address_cart" default="192.168.11.100" />
+    <arg name="ip_address_right" default="192.168.11.101" />
+    <arg name="ip_address_left" default="192.168.11.102" />
+    <arg name="send_format" default="288" />
+    <arg name="recv_format" default="292" />
+    <!-- <arg name="send_format" default="0" />
+    <arg name="recv_format" default="2" /> -->
+    <arg name="bcap_slave_control_cycle_msec" default="8" />
+
+    
+
+
+
+
+    <!-- <include file="$(find myrobot_v2_moveit_config)/launch/planning_context.launch"> -->
+        <!-- <arg name="load_robot_description" value="$(arg load_robot_description)" /> -->
+        <!-- <arg name="robot_name" value="$(arg robot_name)" /> -->
+    <!-- </include> -->
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen" />
+
+    <include file="$(find myrobot_v2_moveit_config)/launch/moveit_rviz.launch" if="$(arg rviz_gui)">
+        <arg name="rviz_config" value="$(find ps4_robot_control)/launch/default.rviz" />
+    </include>
+
+    <group if="$(arg sim)">
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+            <param name="publish_frequency" type="double" value="125.0" />
+            <rosparam param="source_list" subst_value="true">
+                [/$(arg robot_name)/joint_states]
+            </rosparam>
+        </node>
+        <include file="$(find ps4_robot_control)/launch/gazebo.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+            <arg name="paused" value="$(arg paused)" />
+            <arg name="gazebo_gui" value="$(arg gazebo_gui)" />
+            <arg name="urdf_path" value="$(arg urdf_path)" />
+            <arg name="world_path" value="$(arg world_path)" />
+            <arg name="pose" value="$(arg pose)" />
+        </include>
+    </group>
+    <group unless="$(arg sim)">
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+            <param name="publish_frequency" type="double" value="125.0" />
+            <!-- ref: https://x.gd/wmbyI -->
+            <rosparam param="source_list" subst_value="true">
+                [/$(arg robot_name)/joint_states, /$(arg robot_name)/right_arm/joint_states, /$(arg robot_name)/left_arm/joint_states]
+            </rosparam>
+        </node>
+        <include file="$(find ps4_robot_control)/launch/custom_denso_robot_control.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+            <arg name="urdf_path" value="$(arg urdf_path)" />
+            <arg name="ip_address_cart" value="$(arg ip_address_cart)" />
+            <arg name="ip_address_right" value="$(arg ip_address_right)" />
+            <arg name="ip_address_left" value="$(arg ip_address_left)" />
+            <arg name="send_format" value="$(arg send_format)" />
+            <arg name="recv_format" value="$(arg recv_format)" />
+            <arg name="bcap_slave_control_cycle_msec" value="$(arg bcap_slave_control_cycle_msec)" />
+            <arg name="pose" value="$(arg pose)" />
+        </include>
+    </group>
+
+
+    <node name="joy_node" pkg="joy" type="joy_node" />
+
+    <group if="$(arg sim)">
+        <group if="$(arg pose)">
+            <node name="joy_twist_publisher" pkg="ps4_robot_control" type="joy_twist_publisher" />
+
+            <node name="spacenav_to_pose" pkg="cartesian_controller_utilities" type="pose.py" output="screen">
+                <param name="twist_topic" value="/cmd_vel"/>
+                <param name="pose_topic" value="/target_frame/right"/>
+                <param name="frame_id" value="body"/>
+                <param name="end_effector" value="right_soft_hand_tip"/>
+                <param name="publishing_rate" value="10"/>
+            </node>
+        </group>
+        <group unless="$(arg pose)">
+            <node name="joy_wrenchstamped_publisher" pkg="ps4_robot_control" type="joy_wrenchstamped_publisher" />
+        </group>
+    </group>
+    <group unless="$(arg sim)">
+        <group if="$(arg pose)">
+            <node name="joy_twist_publisher" pkg="ps4_robot_control" type="joy_twist_publisher" />
+
+            <!-- <node name="spacenav_to_pose_right" pkg="cartesian_controller_utilities" type="pose.py" output="screen">
+                <param name="twist_topic" value="/cmd_vel/right"/>
+                <param name="pose_topic" value="/target_frame/right"/>
+                <param name="frame_id" value="body"/>
+                <param name="end_effector" value="right_soft_hand_tip"/>
+                <param name="publishing_rate" value="10"/>
+            </node>
+            <node name="spacenav_to_pose_left" pkg="cartesian_controller_utilities" type="pose.py" output="screen">
+                <param name="twist_topic" value="/cmd_vel/left"/>
+                <param name="pose_topic" value="/target_frame/left"/>
+                <param name="frame_id" value="body"/>
+                <param name="end_effector" value="left_soft_hand_tip"/>
+                <param name="publishing_rate" value="10"/>
+            </node> -->
+        </group>
+        <group unless="$(arg pose)">
+            <node name="joy_wrenchstamped_publisher" pkg="ps4_robot_control" type="joy_wrenchstamped_publisher">
+                <remap from="/myrobot/left_cartesian_force_controller/target_wrench" to="/myrobot/right_arm/right_cartesian_force_controller/target_wrench"/>
+            </node>
+        </group>
+    </group>
+
+
+
+</launch>

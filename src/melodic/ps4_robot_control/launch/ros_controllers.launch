@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="pose"/>
+  <arg name="sim"/>
+
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+
+
+
+  
+  <!-- Gazebo -->
+  <group if="$(arg sim)">
+    <rosparam file="$(find ps4_robot_control)/config/ros_controllers.yaml" command="load" />
+    <group if="$(arg pose)">
+      <node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot" args="--namespace=/myrobot 
+        joint_state_controller left_cartesian_motion_controller right_cartesian_motion_controller
+      " />
+    </group>
+    <group unless="$(arg pose)">
+      <node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot" args="--namespace=/myrobot 
+        joint_state_controller left_cartesian_force_controller right_cartesian_force_controller
+      " />
+    </group>
+  </group>
+
+  <!-- 実機 -->
+  <group unless="$(arg sim)">
+    <rosparam file="$(find ps4_robot_control)/config/real_controllers.yaml" command="load" />
+    <group if="$(arg pose)">
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/right_arm" args="--namespace=/myrobot/right_arm 
+          joint_state_controller right_cartesian_motion_controller 
+      " />
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm 
+          joint_state_controller left_cartesian_motion_controller
+      " />
+    </group>
+    <group unless="$(arg pose)">
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/right_arm" args="--namespace=/myrobot/right_arm 
+          joint_state_controller right_cartesian_force_controller 
+      " />
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm 
+          joint_state_controller left_cartesian_force_controller
+      " />
+    </group>
+  </group>
+
+
+
+  <!-- Load the controllers -->
+
+
+
+
+
+</launch>

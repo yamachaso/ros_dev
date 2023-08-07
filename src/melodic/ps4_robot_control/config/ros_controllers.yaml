@@ -1,0 +1,129 @@
+generic_hw_control_loop:
+  loop_hz: 300
+  cycle_time_error_threshold: 0.01
+# Settings for ros_control hardware interface
+hardware_interface:
+  joints: &entire_joints
+    - joint_body
+    - left_joint_sholder
+    - left_joint_1
+    - left_joint_2
+    - left_joint_3
+    - left_joint_4
+    - left_joint_5
+    - left_joint_6
+    - joint_back
+    - right_joint_sholder
+    - right_joint_1
+    - right_joint_2
+    - right_joint_3
+    - right_joint_4
+    - right_joint_5
+    - right_joint_6
+sim_control_mode: 1 # 0: position, 1: velocity
+
+myrobot:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 125
+  left_cartesian_force_controller:
+    type: "position_controllers/CartesianForceController"
+    end_effector_link: "left_soft_hand_tip"
+    robot_base_link: "base_link"
+    ft_sensor_ref_link: "left_soft_hand_base_link" # base_linkとエンドエフェクタの間にあるフレームならなんでも良さそう
+    joints:
+      # - joint_body
+      - left_joint_sholder
+      - left_joint_1
+      - left_joint_2
+      - left_joint_3
+      - left_joint_4
+      - left_joint_5
+      - left_joint_6
+
+    solver:
+        error_scale: 0.5
+
+    pd_gains:
+        trans_x: {p: 0.05}
+        trans_y: {p: 0.05}
+        trans_z: {p: 0.05}
+        rot_x: {p: 15}
+        rot_y: {p: 15}
+        rot_z: {p: 15}
+
+
+  right_cartesian_force_controller:
+    type: "position_controllers/CartesianForceController"
+    end_effector_link: "right_soft_hand_tip"
+    robot_base_link: "base_link"
+    ft_sensor_ref_link: "right_soft_hand_base_link"
+    joints:
+      # - joint_back
+      - right_joint_sholder
+      - right_joint_1
+      - right_joint_2
+      - right_joint_3
+      - right_joint_4
+      - right_joint_5
+      - right_joint_6
+
+    solver:
+        error_scale: 0.5
+
+    pd_gains:
+        trans_x: {p: 0.05}
+        trans_y: {p: 0.05}
+        trans_z: {p: 0.05}
+        rot_x: {p: 1.5}
+        rot_y: {p: 1.5}
+        rot_z: {p: 1.5}
+
+  left_cartesian_motion_controller:
+      type: "position_controllers/CartesianMotionController"
+      end_effector_link: "left_soft_hand_tip"
+      robot_base_link: "body" # base_linkだとうまくいかない。なぜかやばい動きをする。
+      target_frame_topic: "/target_frame/left"
+
+      joints:
+        # - joint_body
+        - left_joint_sholder
+        - left_joint_1
+        - left_joint_2
+        - left_joint_3
+        - left_joint_4
+        - left_joint_5
+        - left_joint_6
+
+      pd_gains:
+          trans_x: {p: 10.0}
+          trans_y: {p: 10.0}
+          trans_z: {p: 10.0}
+          rot_x: {p: 1.0}
+          rot_y: {p: 1.0}
+          rot_z: {p: 1.0}
+
+  right_cartesian_motion_controller:
+      type: "position_controllers/CartesianMotionController"
+      end_effector_link: "right_soft_hand_tip"
+      robot_base_link: "body"
+      target_frame_topic: "/target_frame/right"
+
+      joints:
+        # - joint_back
+        - right_joint_sholder
+        - right_joint_1
+        - right_joint_2
+        - right_joint_3
+        - right_joint_4
+        - right_joint_5
+        - right_joint_6
+
+      pd_gains:
+          trans_x: {p: 10.0}
+          trans_y: {p: 10.0}
+          trans_z: {p: 10.0}
+          rot_x: {p: 1.0}
+          rot_y: {p: 1.0}
+          rot_z: {p: 1.0}
+

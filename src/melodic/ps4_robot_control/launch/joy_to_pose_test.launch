@@ -1,0 +1,27 @@
+<launch>
+  <!-- <node name="spacenav_to_pose" pkg="cartesian_controller_utilities" type="pose.py" output="screen">
+    <param name="twist_topic" value="/cmd_vel"/>
+    <param name="pose_topic" value="/target_frame/right"/>
+    <param name="frame_id" value="body"/>
+    <param name="end_effector" value="right_soft_hand_tip"/>
+    <param name="publishing_rate" value="10"/>
+  </node> -->
+
+
+    <node name="spacenav_to_pose_right" pkg="ps4_robot_control" type="pose.py" output="screen">
+        <param name="twist_topic" value="/cmd_vel/right"/>
+        <param name="pose_topic" value="/target_frame/right"/>
+        <param name="frame_id" value="body"/>
+        <param name="end_effector" value="right_soft_hand_tip"/>
+        <param name="publishing_rate" value="10"/>
+    </node>
+    <node name="spacenav_to_pose_left" pkg="ps4_robot_control" type="pose.py" output="screen">
+        <param name="twist_topic" value="/cmd_vel/left"/>
+        <param name="pose_topic" value="/target_frame/left"/>
+        <param name="frame_id" value="body"/>
+        <param name="end_effector" value="left_soft_hand_tip"/>
+        <param name="publishing_rate" value="10"/>
+    </node>
+
+
+</launch>

@@ -1,0 +1,601 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /TF1
+        - /TF1/Frames1
+        - /TF1/Tree1
+        - /RobotModel1
+      Splitter Ratio: 0.7425600290298462
+    Tree Height: 1674
+  - Class: rviz/Help
+    Name: Help
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        back:
+          Value: false
+        base_link:
+          Value: false
+        body:
+          Value: false
+        body_camera_base_link:
+          Value: false
+        body_camera_bottom_screw_frame:
+          Value: false
+        body_camera_color_frame:
+          Value: false
+        body_camera_color_optical_frame:
+          Value: false
+        body_camera_depth_frame:
+          Value: false
+        body_camera_depth_optical_frame:
+          Value: false
+        body_camera_left_ir_frame:
+          Value: false
+        body_camera_left_ir_optical_frame:
+          Value: false
+        body_camera_link:
+          Value: false
+        body_camera_right_ir_frame:
+          Value: false
+        body_camera_right_ir_optical_frame:
+          Value: false
+        cart:
+          Value: false
+        left_J1:
+          Value: false
+        left_J2:
+          Value: false
+        left_J3:
+          Value: false
+        left_J4:
+          Value: false
+        left_J5:
+          Value: false
+        left_J6:
+          Value: false
+        left_base_link:
+          Value: false
+        left_camera_base_link:
+          Value: false
+        left_camera_bottom_screw_frame:
+          Value: false
+        left_camera_color_frame:
+          Value: false
+        left_camera_color_optical_frame:
+          Value: false
+        left_camera_depth_frame:
+          Value: false
+        left_camera_depth_optical_frame:
+          Value: false
+        left_camera_left_ir_frame:
+          Value: false
+        left_camera_left_ir_optical_frame:
+          Value: false
+        left_camera_link:
+          Value: false
+        left_camera_right_ir_frame:
+          Value: false
+        left_camera_right_ir_optical_frame:
+          Value: false
+        left_finger_1_link:
+          Value: false
+        left_hand_joint:
+          Value: false
+        left_sholder:
+          Value: false
+        left_soft_hand_base_link:
+          Value: false
+        left_soft_hand_tip:
+          Value: true
+        right_J1:
+          Value: false
+        right_J2:
+          Value: false
+        right_J3:
+          Value: false
+        right_J4:
+          Value: false
+        right_J5:
+          Value: false
+        right_J6:
+          Value: false
+        right_base_link:
+          Value: false
+        right_camera_base_link:
+          Value: false
+        right_camera_bottom_screw_frame:
+          Value: false
+        right_camera_color_frame:
+          Value: false
+        right_camera_color_optical_frame:
+          Value: false
+        right_camera_depth_frame:
+          Value: false
+        right_camera_depth_optical_frame:
+          Value: false
+        right_camera_left_ir_frame:
+          Value: false
+        right_camera_left_ir_optical_frame:
+          Value: false
+        right_camera_link:
+          Value: false
+        right_camera_right_ir_frame:
+          Value: false
+        right_camera_right_ir_optical_frame:
+          Value: false
+        right_finger_1_link:
+          Value: false
+        right_hand_joint:
+          Value: false
+        right_sholder:
+          Value: false
+        right_soft_hand_base_link:
+          Value: false
+        right_soft_hand_tip:
+          Value: true
+        world:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        world:
+          base_link:
+            cart:
+              back:
+                body:
+                  body_camera_base_link:
+                    body_camera_bottom_screw_frame:
+                      body_camera_link:
+                        body_camera_depth_frame:
+                          body_camera_color_frame:
+                            body_camera_color_optical_frame:
+                              {}
+                          body_camera_depth_optical_frame:
+                            {}
+                          body_camera_left_ir_frame:
+                            body_camera_left_ir_optical_frame:
+                              {}
+                          body_camera_right_ir_frame:
+                            body_camera_right_ir_optical_frame:
+                              {}
+                  left_sholder:
+                    left_base_link:
+                      left_J1:
+                        left_J2:
+                          left_J3:
+                            left_J4:
+                              left_J5:
+                                left_J6:
+                                  left_hand_joint:
+                                    left_camera_base_link:
+                                      left_camera_bottom_screw_frame:
+                                        left_camera_link:
+                                          left_camera_depth_frame:
+                                            left_camera_color_frame:
+                                              left_camera_color_optical_frame:
+                                                {}
+                                            left_camera_depth_optical_frame:
+                                              {}
+                                            left_camera_left_ir_frame:
+                                              left_camera_left_ir_optical_frame:
+                                                {}
+                                            left_camera_right_ir_frame:
+                                              left_camera_right_ir_optical_frame:
+                                                {}
+                                    left_soft_hand_base_link:
+                                      left_finger_1_link:
+                                        {}
+                                      left_soft_hand_tip:
+                                        {}
+                  right_sholder:
+                    right_base_link:
+                      right_J1:
+                        right_J2:
+                          right_J3:
+                            right_J4:
+                              right_J5:
+                                right_J6:
+                                  right_hand_joint:
+                                    right_camera_base_link:
+                                      right_camera_bottom_screw_frame:
+                                        right_camera_link:
+                                          right_camera_depth_frame:
+                                            right_camera_color_frame:
+                                              right_camera_color_optical_frame:
+                                                {}
+                                            right_camera_depth_optical_frame:
+                                              {}
+                                            right_camera_left_ir_frame:
+                                              right_camera_left_ir_optical_frame:
+                                                {}
+                                            right_camera_right_ir_frame:
+                                              right_camera_right_ir_optical_frame:
+                                                {}
+                                    right_soft_hand_base_link:
+                                      right_finger_1_link:
+                                        {}
+                                      right_soft_hand_tip:
+                                        {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        back:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        body_camera_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_left_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_left_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        body_camera_right_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body_camera_right_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        cart:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_J6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_camera_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_left_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_left_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_camera_right_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_camera_right_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_finger_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_hand_joint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_sholder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_soft_hand_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_soft_hand_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_J1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_J2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_J3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_J4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_J5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_J6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_camera_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_left_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_left_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_camera_right_ir_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_camera_right_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_finger_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_hand_joint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_sholder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_soft_hand_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_soft_hand_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz/XYOrbit
+      Distance: 2.6957502365112305
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 1.446318507194519
+        Y: 0.09677886962890625
+        Z: -1.2069934882674715e-6
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.24479667842388153
+      Target Frame: base_link
+      Value: XYOrbit (rviz)
+      Yaw: 3.9999442100524902
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1920
+  Help:
+    collapsed: false
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd00000001000000000000036a000006eefc0200000009fb000000100044006900730070006c0061007900730100000069000006ee0000017800fffffffb0000000800480065006c00700000000342000000bb000000cf00fffffffb0000000a0056006900650077007300000003b0000000b00000012300fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067000000027a000003240000000000000000fc0000057b000001dc0000000000fffffffa000000000100000003fb00000008004c0065006600740100000000ffffffff0000000000000000fb0000000a0052006900670068007401000000000000036a0000000000000000fb000000080042006f006400790100000000ffffffff0000000000000000fc000005b1000001a60000000000fffffffa000000000100000003fb00000008004c00650066007401000000000000036a0000000000000000fb0000000a005200690067006800740100000000ffffffff0000000000000000fb000000080042006f006400790100000000ffffffff000000000000000000000812000006ee00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Views:
+    collapsed: false
+  Width: 2952
+  X: 144
+  Y: 140
