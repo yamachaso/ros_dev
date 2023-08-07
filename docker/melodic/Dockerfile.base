@@ -30,7 +30,7 @@ RUN apt-get install -y --allow-downgrades --allow-remove-essential --allow-chang
 	libpcap-dev libopenblas-dev \
 	gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
 	ros-melodic-desktop-full python-rosdep python-rosinstall-generator python-vcstool build-essential \
-	python-catkin-tools
+	python-catkin-tools python-pip
 
 RUN apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
     ros-melodic-ros-tutorials \
@@ -63,7 +63,8 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="
     ros-melodic-mongodb-store \
     ros-melodic-warehouse-ros-mongo \
     ros-melodic-joy \
-    ros-melodic-joystick-drivers
+    ros-melodic-joystick-drivers \
+    ros-melodic-rqt-controller-manager
 
 RUN mkdir -p ${ROS_WORKSPACE}/src
 # RUN git clone -b melodic-devel https://github.com/DENSORobot/denso_robot_ros.git ${HOME}/catkin_ws/src
@@ -109,5 +110,10 @@ RUN  mkdir -p ${HOME}/.ignition/fuel
 COPY ./configs/ignition_robotics/config.yaml ${HOME}/.ignition/fuel/
 
 USER ${USER}
+
+RUN pip install numpy
+RUN pip install numpy-quaternion
+RUN pip install scipy
+
 WORKDIR ${ROS_WORKSPACE}
 
