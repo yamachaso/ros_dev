@@ -8,6 +8,7 @@
 roslaunch myrobot_moveit bringup.launch
 - 実機:
 roslaunch myrobot_moveit bringup.launch used_camera:=right_camera sim:=false
+roslaunch myrobot_moveit bringup_hand.launch used_camera:=right_camera sim:=false auto_planning:=false
 
 ### Detect:
 - Gazebo:
