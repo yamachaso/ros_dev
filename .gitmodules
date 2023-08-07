@@ -11,3 +11,6 @@
 [submodule "src/noetic/detect"]
 	path = src/noetic/detect
 	url = git@github.com:yamachaso/detect.git
+[submodule "src/melodic/cartesian_controllers"]
+	path = src/melodic/cartesian_controllers
+	url = git@github.com:fzi-forschungszentrum-informatik/cartesian_controllers.git
