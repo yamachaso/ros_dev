@@ -1,8 +1,8 @@
 <launch>
     <arg name="robot_name" default="myrobot" />
-    <arg name="camera_serial_no_1" default="032622073208" />
+    <arg name="camera_serial_no_1" default="" />
     <arg name="camera_serial_no_2" default="" />
-    <arg name="camera_serial_no_3" default="047322070125" />
+    <arg name="camera_serial_no_3" default="" />
 
     <!-- delay each launch because power error if cameras are launched simultaneously -->
     <group ns="$(arg robot_name)">

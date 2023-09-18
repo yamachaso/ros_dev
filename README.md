@@ -18,6 +18,8 @@ roslaunch detect bringup.launch el_insertion_th:=0 el_contact_th:=0 el_bw_depth_
 
 subome radius 19 / 2 = 9.5mm
 
+カメラの切り替えは、senserのところとmulticameraのところをいじる
+
 ## 概要
 denso_rosと、画像処理や機械学習系のモジュールが依存する環境(rosやpthonのver)が異なるため、
 コンテナを２つ作成し、実行環境を切り分けている。

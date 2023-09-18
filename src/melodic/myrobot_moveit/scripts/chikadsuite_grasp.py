@@ -100,8 +100,8 @@ class MoveGroupHandler:
         self.whole_move_group.clear_pose_targets()
         return res
 
-    def pick(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
-        rospy.logwarn("premove: true")
+    def approach(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
+        rospy.logwarn("approach_fucntion")
         pre_pose = self.current_eef_default_pose
         grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
         apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
@@ -111,56 +111,65 @@ class MoveGroupHandler:
         pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
         waypoints = [pre_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
-        if plan_score == 1:
+        print("plan_score", plan_score)
+        if plan_score > 0.9: # TODO
             self.execute(plan, wait=True)
-            post_pose = pre_pose
-            post_pose.position.z -= apploach_desired_distance
-            post_plan, post_plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
-            print("post plan score:", post_plan_score)
-            if manual_wait:
-                # rospy.sleep(5)
-                print("-" * 40)
-                print("please input to approach")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
-            self.execute(post_plan, wait=True)
 
-            rospy.logerr("grab")
-            hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-            hand_msg = Float64MultiArray()
-            hand_msg.data = [0.8, 0.8]
-            hand_pub.publish(hand_msg)
-            rospy.logerr("grabed")
+            # rospy.logerr("grab")
+            # hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+            # hand_msg = Float64MultiArray()
+            # hand_msg.data = [0.8, 0.8]
+            # hand_pub.publish(hand_msg)
+            # rospy.logerr("grabed")
 
-            self.current_move_group.attach_object(object_name)
-            retreat_plan, retreat_plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
-            print("retreat plan score:", retreat_plan_score)
-            if manual_wait:
-                # rospy.sleep(5)
-                print("-" * 40)
-                print("please input to retreat")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
-            self.execute(retreat_plan, wait=True)
-            if manual_wait:
-                print("-" * 40)
-                print("please input to place")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
+            # self.current_move_group.attach_object(object_name)
 
-            hand_msg.data = [0.0, 0.0]
-            hand_pub.publish(hand_msg)
+            # hand_msg.data = [0.0, 0.0]
+            # hand_pub.publish(hand_msg)
 
             return True
         else:
-            print("picking failed...")
+            print("approach failed...")
             return False
+
+    def pick(self, object_name, target_pose, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
+        rospy.logwarn("pick_fucntion")
+        pre_pose = self.current_eef_default_pose
+        pre_pose.position = target_pose.position #TODO TMP
+        # pre_pose.position.z += 0.1
+        pre_pose.orientation =  target_pose.orientation
+        plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
+        if plan_score < 0.9:
+            print("pick failed...")
+            return False
+        
+        print("\033[92m{}\033[0m".format("pick"))
+        
+        self.execute(plan, wait=True)
+
+        rospy.logerr("grab")
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [target_pressure, target_pressure]
+        hand_pub.publish(hand_msg)
+        rospy.logerr("grabed")
+
+        rospy.sleep(5)
+
+        self.current_move_group.attach_object(object_name)
+
+        hand_msg.data = [0.0, 0.0]
+        hand_pub.publish(hand_msg)
+
+        post_pose = pre_pose
+        post_pose.position.z += 0.2 #TODO ハードコード
+        plan, plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
+        if plan_score < 0.9:
+            print("pick failed 2...")
+            return False
+        self.execute(plan, wait=True)
+
+        return True
 
 
     def place(self, object_name, locations):
@@ -280,8 +289,8 @@ class Myrobot:
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         start_mv = mv_left_arm if used_camera == "left_camera" else mv_right_arm
-        # self.mv_handler = MoveGroupHandler(mv_body_to_left_arm, mv_body_to_right_arm, start_mv, mv_base_to_arms)
-        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
+        self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
+        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
 
         rospy.logerr("6")
 
@@ -292,6 +301,8 @@ class Myrobot:
             points_topic=points_topic,
             wait=wait
         )
+
+        rospy.logerr("7")
 
     def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
         q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
@@ -335,7 +346,7 @@ class Myrobot:
         res =  self.mv_handler.execute(plan, wait)
         return res
 
-    def pick(self, object_name, object_msg, 
+    def approach(self, object_name, object_msg, 
              c_eef_step=0.01, c_jump_threshold=0.0,
              grasp_quality=1., approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.1, retreat_min_distance=0.05, manual_wait=False):
         obj_position_point = object_msg.center_pose.pose.position
@@ -364,8 +375,25 @@ class Myrobot:
             finger_joints=finger_joints,
             allowed_touch_objects=[object_name]
         )]
-        res = self.mv_handler.pick(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
+        res = self.mv_handler.approach(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
         return res, arm_index
+    
+    def pick(self, object_name, target_pose, target_angle, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
+        # obj_position_point = target_pose.position
+
+        # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z)
+
+        rpy=(math.pi, 0, np.radians(target_angle))
+        q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+        orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        pose = Pose(position=target_pose.position, orientation=orientation)
+        
+
+
+
+        res = self.mv_handler.pick(object_name, pose, target_pressure, arm_index, c_eef_step, c_jump_threshold)
+        return res
+        
 
     def place(self, arm_index, object_name, approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.01, retreat_min_distance=0.05):       
         place_position = (0, -1, 0.4)
@@ -376,6 +404,9 @@ class Myrobot:
 
     def detect(self):
         return self.gd_cli.detect()
+    
+    def calcurate_insertion(self):
+        return self.gd_cli.calcurate_insertion()
 
     def select_arm(self, y):
         # 0: left, 1: right
@@ -469,65 +500,80 @@ if __name__ == "__main__":
 
         scores = [obj.score for obj in objects]
         ordered_indexes = np.argsort(scores)[::-1] # 降順
-        for target_index in ordered_indexes:
-            rospy.logerr("a1")
-            obj = objects[target_index]
-            obj_name = "object_{}".format(len(registered_objects))
-            # TMP: ズレの補正
-            obj.center_pose.pose.position.y -= 0.01
+        target_index = ordered_indexes[0]
 
-            # visualize target
-            vis_cli.send_goal(VisualizeTargetGoal(obj.index))
+        rospy.logerr("a1")
+        obj = objects[target_index]
+        obj_name = "object_{}".format(len(registered_objects))
+        # TMP: ズレの補正
+        obj.center_pose.pose.position.y -= 0.01
+
+        # visualize target
+        vis_cli.send_goal(VisualizeTargetGoal(obj.index))
+        
+        # add object
+        obj_pose = obj.center_pose
+        # obj_pose.pose.position.z -= obj.length_to_center / 2
+        obj_pose.pose.orientation = Quaternion()
+        # obj.length_to_center = obj.length_to_center * 1.3
+        insert_depth = obj.length_to_center
+        # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
+        myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
+        ### myrobot.scene_handler.update_octomap()
+
+        
+        # pick
+        print("try to pick {}-th object | score: {}".format(target_index, obj.score))
+        # TODO: pull up arm index computation from pick
+        is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
+                    grasp_quality=obj.score,
+                    approach_desired_distance=insert_depth * 2,
+                    retreat_desired_distance=insert_depth * 2,
+                    approach_min_distance=insert_depth * 1.2,
+                    retreat_min_distance= insert_depth * 1.2,
+                    manual_wait=manual_wait
+        )
+        print("is_approach_successed : \033[92m{}\033[0m".format(is_approach_successed))
+
+        if is_approach_successed:
+            print("\033[92m{}\033[0m".format("aaaa"))
+            res = myrobot.calcurate_insertion()
+            print("\033[92m{}\033[0m".format("bbbb"))
+            myrobot.pick(obj_name, res.pose, res.angle, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+            print("\033[92m{}\033[0m".format("cccc"))
             
-            # add object
-            obj_pose = obj.center_pose
-            # obj_pose.pose.position.z -= obj.length_to_center / 2
-            obj_pose.pose.orientation = Quaternion()
-            # obj.length_to_center = obj.length_to_center * 1.3
-            insert_depth = obj.length_to_center
-            # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
-            myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
-            ### myrobot.scene_handler.update_octomap()
 
-            
-            # pick
-            print("try to pick {}-th object | score: {}".format(target_index, obj.score))
-            # TODO: pull up arm index computation from pick
-            is_pick_successed, arm_index = myrobot.pick(obj_name, obj,
-                        grasp_quality=obj.score,
-                        approach_desired_distance=insert_depth * 1.3,
-                        retreat_desired_distance=insert_depth * 2,
-                        approach_min_distance=insert_depth * 1.2,
-                        retreat_min_distance= insert_depth * 1.2,
-                        manual_wait=manual_wait
-            )
-            print("is_pick_successed : \033[92m{}\033[0m".format(is_pick_successed))
 
-            hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-            hand_msg = Float64MultiArray()
-            hand_msg.data = [0.0, 0.0]
-            hand_pub.publish(hand_msg)
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [0.0, 0.0]
+        hand_pub.publish(hand_msg)
 
-            print("pick result for the {}-th object: {}".format(target_index, is_pick_successed))
-            is_place_successed = False
-            if not grasp_only and is_pick_successed:
-                myrobot.initialize_current_pose(cartesian_mode=True)
-                print("try toc place {}-th object".format(target_index))
-                is_place_successed = myrobot.place(arm_index, obj_name)
-                print("place result for the {}-th object: {}".format(target_index, is_place_successed))
-                # print("will initialize")
-                # myrobot.initialize_whole_pose()
-                # break
-            # else:
-                # print("will initialize")
-                # myrobot.initialize_current_pose(cartesian_mode=True)
+        print("pick result for the {}-th object: {}".format(target_index, is_approach_successed))
+        is_place_successed = False
+        if not grasp_only and is_approach_successed:
+            myrobot.initialize_current_pose(cartesian_mode=True)
+            print("try toc place {}-th object".format(target_index))
+            is_place_successed = myrobot.place(arm_index, obj_name)
+            print("place result for the {}-th object: {}".format(target_index, is_place_successed))
+            # print("will initialize")
+            # myrobot.initialize_whole_pose()
+            # break
+        # else:
+            # print("will initialize")
+            # myrobot.initialize_current_pose(cartesian_mode=True)
 
-            link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
-            myrobot.scene_handler.remove_attached_object(link) 
-            print("will initialize")
-            myrobot.initialize_whole_pose()
-            if is_place_successed:
-                break
+        link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
+        myrobot.scene_handler.remove_attached_object(link) 
+        # print("will initialize")
+        print("\033[92m{}\033[0m".format("will initialize"))
+
+        myrobot.initialize_whole_pose()
+        if is_place_successed:
+            break
+
+        print("\033[92m{}\033[0m".format("initialized!!"))
+
 
         myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()

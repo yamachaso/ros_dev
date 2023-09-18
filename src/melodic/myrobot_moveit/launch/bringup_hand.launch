@@ -39,10 +39,10 @@
     <!-- <arg name="camera_serial_no_1" default="032622073208" /> -->
     <arg name="camera_serial_no_1" default="" />
     <!-- right -->
-    <!-- <arg name="camera_serial_no_2" default="" /> -->
-    <arg name="camera_serial_no_2" default="032622073208" />
+    <arg name="camera_serial_no_2" default="915112070340" />
+    <!-- <arg name="camera_serial_no_2" default="032622073208" /> -->
     <!-- body -->
-    <arg name="camera_serial_no_3" default="" />
+    <arg name="camera_serial_no_3" default="047322070125" />
     <!-- <arg name="camera_serial_no_3" default="047322070125" /> -->
 
     <!-- for planning.py -->
@@ -150,7 +150,9 @@
     
     <group if="$(arg enable_auto_planning)">
         <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/> -->
-        <node name="auto_planner" pkg="myrobot_moveit" type="planning_hand.py" output="screen"/>
+        <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning_hand.py" output="screen"/> -->
+        <node name="auto_planner" pkg="myrobot_moveit" type="chikadsuite_grasp.py" output="screen"/>
+ 
     </group>
     <group unless="$(arg enable_auto_planning)">
         <node name="grasp_detection_client" pkg="myrobot_moveit" type="grasp_detection_client.py" />
