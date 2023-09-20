@@ -134,6 +134,18 @@ class MoveGroupHandler:
 
     def pick(self, object_name, target_pose, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
         rospy.logwarn("pick_fucntion")
+
+        # print("\033[92m{}\033[0m".format("target_pressure"))
+        # print("\033[92m{}\033[0m".format(target_pressure))
+
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [target_pressure, target_pressure]
+        hand_pub.publish(hand_msg)
+
+        
+        rospy.logerr(target_pressure)
+
         pre_pose = self.current_eef_default_pose
         pre_pose.position = target_pose.position #TODO TMP
         # pre_pose.position.z += 0.1
@@ -148,9 +160,7 @@ class MoveGroupHandler:
         self.execute(plan, wait=True)
 
         rospy.logerr("grab")
-        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-        hand_msg = Float64MultiArray()
-        hand_msg.data = [target_pressure, target_pressure]
+        hand_msg.data = [1.2, 1.2]
         hand_pub.publish(hand_msg)
         rospy.logerr("grabed")
 
@@ -158,8 +168,6 @@ class MoveGroupHandler:
 
         self.current_move_group.attach_object(object_name)
 
-        hand_msg.data = [0.0, 0.0]
-        hand_pub.publish(hand_msg)
 
         post_pose = pre_pose
         post_pose.position.z += 0.2 #TODO ハードコード
@@ -168,6 +176,9 @@ class MoveGroupHandler:
             print("pick failed 2...")
             return False
         self.execute(plan, wait=True)
+
+        # hand_msg.data = [0.0, 0.0]
+        # hand_pub.publish(hand_msg)
 
         return True
 
@@ -490,7 +501,7 @@ if __name__ == "__main__":
     hand_pub.publish(hand_msg)
 
     while not rospy.is_shutdown():
-        rospy.logerr("loop wawa")
+        rospy.logerr("loop start")
         rospy.sleep(0.1)
         # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
         objects = myrobot.detect()
@@ -499,7 +510,9 @@ if __name__ == "__main__":
             continue
 
         scores = [obj.score for obj in objects]
-        ordered_indexes = np.argsort(scores)[::-1] # 降順
+        print("scores : ", scores)
+        ordered_indexes = np.argsort(scores)
+        # ordered_indexes = np.argsort(scores)[::-1] # 降順
         target_index = ordered_indexes[0]
 
         rospy.logerr("a1")
@@ -538,8 +551,11 @@ if __name__ == "__main__":
         if is_approach_successed:
             print("\033[92m{}\033[0m".format("aaaa"))
             res = myrobot.calcurate_insertion()
-            print("\033[92m{}\033[0m".format("bbbb"))
-            myrobot.pick(obj_name, res.pose, res.angle, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+            
+            if res.success:
+                myrobot.pick(obj_name, res.pose, res.angle, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+            else:
+                print("\033[92m{}\033[0m".format("no good cabbage..."))
             print("\033[92m{}\033[0m".format("cccc"))
             
 

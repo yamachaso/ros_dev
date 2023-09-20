@@ -29,11 +29,9 @@ class GraspDetectionClient:
         self.detect_client = SimpleActionClient('detect_server', GraspDetectionAction)
         self.calcurate_insertion_client = SimpleActionClient('calcurate_insertion_server', CalcurateInsertionAction)
 
-        rospy.logwarn("aaaaa")
         if wait:
             self.detect_client.wait_for_server()
             self.calcurate_insertion_client.wait_for_server()
-        rospy.logwarn("bbbbb")
 
     # def callback(self, img_msg, depth_msg):
     def callback(self, img_msg, depth_msg, points_msg):
@@ -58,12 +56,8 @@ class GraspDetectionClient:
         # wait for getting new images
         while self.request2 is None or self.ts.last_added <= last_added:
             pass
-        rospy.logwarn("1234")
         self.calcurate_insertion_client.send_goal_and_wait(self.request2)
-        rospy.logwarn("5678")
-
         res = self.calcurate_insertion_client.get_result()
-        rospy.logwarn("9999")
 
         return res
 
