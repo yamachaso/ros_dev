@@ -19,6 +19,9 @@ from tf.transformations import quaternion_from_euler
 from octomap_handler import OctomapHandler
 from std_msgs.msg import Float64MultiArray
 
+from moveit_msgs.msg import RobotState
+from sensor_msgs.msg import JointState
+
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
         super(MoveGroup, self).__init__(name)
@@ -105,6 +108,8 @@ class MoveGroupHandler:
         pre_pose = self.current_eef_default_pose
         grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
         apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
+        print("apploach_desired_distance : ", apploach_desired_distance)
+        print(grasp_position)
         pre_pose.position.x = grasp_position.x
         pre_pose.position.y = grasp_position.y
         pre_pose.position.z =  grasp_position.z + apploach_desired_distance
@@ -146,35 +151,176 @@ class MoveGroupHandler:
         
         rospy.logerr(target_pressure)
 
-        pre_pose = self.current_eef_default_pose
+        # pre_pose = self.current_eef_default_pose
+        pre_pose = self.current_move_group.get_current_pose().pose
         pre_pose.position = target_pose.position #TODO TMP
-        # pre_pose.position.z += 0.1
+        pre_pose.position.z -= 0.15
         pre_pose.orientation =  target_pose.orientation
+        print("pre_pose : ", pre_pose)
         plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
-        if plan_score < 0.9:
-            print("pick failed...")
+        print("pre_pose position")
+        print(pre_pose.position)
+        print("pre_pose score", plan_score)
+        if plan_score < 0.5:
+            print("pick failed 1...")
             return False
         
-        print("\033[92m{}\033[0m".format("pick"))
-        
+        print("\033[92m{}\033[0m".format("pre pose"))
         self.execute(plan, wait=True)
+
+        rospy.sleep(1)
+
+
+        # これが大事？
+        self.current_move_group.stop()
+        self.current_move_group.clear_pose_targets()
+
+
+
+        # pick_pose = self.current_move_group.get_current_pose()
+        # print(self.current_move_group.get_end_effector_link())
+        # end_effector_link = self.current_move_group.get_end_effector_link()
+        # pick_pose.pose.position.z -= 0.1
+        # print(pick_pose)
+        # # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
+
+
+        # robot = mc.RobotCommander()
+        # current_state = robot.get_current_state()
+        # joint_state = JointState()
+        # joint_state.name = current_state.joint_state.name
+        # joint_state.position = current_state.joint_state.position
+
+        # # RobotStateメッセージに新しいジョイント状態を設定
+        # robot_state = RobotState()
+        # robot_state.joint_state = joint_state
+
+        # # set_start_stateを使用して新しいジョイント状態を設定
+        # self.current_move_group.set_start_state(robot_state)
+
+        # self.current_move_group.set_pose_target(pick_pose, end_effector_link=end_effector_link)
+
+        # # 追記：実行可能かの確認
+        # plan = self.current_move_group.plan()
+        # if not plan.joint_trajectory.points:
+        #     rospy.logerr("No motion plan found")
+
+        # モーションプランの計画と実行
+        # self.current_move_group.go(wait=True)
+
+        # pick_pose.pose.position.z -= 0.2
+        # print(pick_pose)
+        # # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
+        # self.current_move_group.set_pose_target(pick_pose, end_effector_link=end_effector_link)
+        # self.current_move_group.go(wait=True)
+
+        # pick_pose.pose.position.z -= 0.0
+        # print(pick_pose)
+        # # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
+        # self.current_move_group.set_pose_target(pick_pose, end_effector_link=end_effector_link)
+        # self.current_move_group.go(wait=True)
+
+        # 後処理
+        # self.current_move_group.stop()
+        # self.current_move_group.clear_pose_targets()
+    
+            
+###################################
+        # pick_pose = pre_pose
+        # print("pick_pose : ", pick_pose)
+        # pick_pose.position = target_pose.position
+        # pick_pose.position.z -= 0.1
+        # # pick_pose.orientation =  target_pose.orientation
+        # # self.current_move_group.set_pose_target(pick_pose)
+        # self.current_move_group.set_num_planning_attempts(300)
+        # print("pick_pose : ", pick_pose)
+        # plan, plan_score = self.current_move_group.compute_cartesian_path([pick_pose], c_eef_step, c_jump_threshold)
+        # print("pick score", plan_score)
+        # self.current_move_group.set_num_planning_attempts(1)
+
+        # if plan_score < 0.05:
+        #     print("pick failed 2...")
+        #     return False
+        # print("\033[92m{}\033[0m".format("pick pose"))
+        # self.execute(plan, wait=True)
+        # print("\033[92m{}\033[0m".format("pick pose finished"))
+
+###############################
+        # move_group = mc.MoveGroupCommander("right_arm") # for open_manipulator
+        # move_group.set_planner_id('RRTConnectkConfigDefault')
+        # # ref: https://answers.ros.org/question/334902/moveit-control-gripper-instead-of-panda_link8-eff/
+        # # move_group.set_end_effector_link("right_panda_hand_tip")
+        # pick_pose = move_group.get_current_pose()
+        # pick_pose.pose.position = target_pose.position
+        # # pick_pose.pose.position.z -= 0.1
+        # # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
+        # move_group.set_pose_target(pick_pose, end_effector_link="right_soft_hand_tip")
+
+        # # 追記：実行可能かの確認
+        # plan = move_group.plan()
+        # # if not plan.joint_trajectory.points:
+        # #     rospy.logerr("No motion plan found")
+
+        # # モーションプランの計画と実行
+        # move_group.go(wait=True)
+
+        # move_group.stop()
+        # move_group.clear_pose_targets()
+
+        # print("\033[92m{}\033[0m".format("##########################################"))
+        # pick_pose = move_group.get_current_pose()
+        # pick_pose.pose.position.z -= 0.1
+        # move_group.set_pose_target(pick_pose, end_effector_link="right_soft_hand_tip")
+        # plan = move_group.plan()
+        # move_group.go(wait=True)
+
+        # # 後処理
+        # move_group.stop()
+        # move_group.clear_pose_targets()
+
+        # print("\033[92m{}\033[0m".format("##########################################")
+
+###############################
+
+
+
+        # pick_pose = pre_pose
+        # pick_pose.position = target_pose.position
+        # pick_pose.position.z -= 0.1
+        # end_effector_link = self.current_move_group.get_end_effector_link()
+        # self.current_move_group.set_position_target(
+        #     pick_pose.position, 
+        #     end_effector_link=end_effector_link)
+        # self.current_move_group.go(wait=True)
+
+        # # 後処理
+        # self.current_move_group.stop()
+        # self.current_move_group.clear_pose_targets()
+
+
 
         rospy.logerr("grab")
         hand_msg.data = [1.2, 1.2]
         hand_pub.publish(hand_msg)
         rospy.logerr("grabed")
 
-        rospy.sleep(5)
+        rospy.sleep(3)
 
         self.current_move_group.attach_object(object_name)
 
 
-        post_pose = pre_pose
+        # post_pose = pre_pose
+        post_pose = self.current_move_group.get_current_pose().pose
+        print("post_pose : ", post_pose)
         post_pose.position.z += 0.2 #TODO ハードコード
+        print("post_pose : ", post_pose)
         plan, plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
-        if plan_score < 0.9:
-            print("pick failed 2...")
+        if plan_score < 0.5:
+            print("pick failed 3...")
             return False
+        
+        print("post_pose score", plan_score)
+        print("\033[92m{}\033[0m".format("retreat!!"))
         self.execute(plan, wait=True)
 
         # hand_msg.data = [0.0, 0.0]
@@ -277,33 +423,30 @@ class Myrobot:
         # myrobot_moveit/scripts/moveit_test.pyを一度実行するとなぜか直る
         # left groups
         # test_group = mc.MoveGroupCommander("right_arm")
-        rospy.logerr("4.5")
         mv_base_to_left_arm = MoveGroup("base_and_left_arm", constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("5")
+        rospy.logerr("SUCCESS")
         mv_body_to_left_arm = MoveGroup("body_and_left_arm", parent=mv_base_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("6")
         mv_left_arm = MoveGroup("left_arm", parent=mv_body_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         # right groups
-        rospy.logerr("7")
         mv_base_to_right_arm = MoveGroup("base_and_right_arm", constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("8")
         mv_body_to_right_arm = MoveGroup("body_and_right_arm", parent=mv_base_to_right_arm, constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("9")
         mv_right_arm = MoveGroup("right_arm", parent=mv_body_to_right_arm, constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         # whole group
         # TODO: constraintあてる
-        rospy.logerr("10")
         mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
 
-        rospy.logerr("11")
+
+        # TMP
+        # mv_right_arm.set_goal_joint_tolerance(0.07)
+        # mv_right_arm.set_goal_orientation_tolerance(0.07)
+        # mv_right_arm.set_goal_position_tolerance(0.001)
+        # TMP end
 
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         start_mv = mv_left_arm if used_camera == "left_camera" else mv_right_arm
-        self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
-        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
-
-        rospy.logerr("6")
+        # self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
+        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
 
         self.gd_cli = GraspDetectionClient( 
             fps=fps, 
@@ -361,9 +504,8 @@ class Myrobot:
              c_eef_step=0.01, c_jump_threshold=0.0,
              grasp_quality=1., approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.1, retreat_min_distance=0.05, manual_wait=False):
         obj_position_point = object_msg.center_pose.pose.position
-        z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
-        print("z: {}".format(z))
-        obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, z)
+        # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
+        obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
         # TODO: change grsp frame_id from "base_link" to each hand frame
         # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
         # arm_index = 1
@@ -399,7 +541,8 @@ class Myrobot:
         orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
         pose = Pose(position=target_pose.position, orientation=orientation)
         
-
+        print("in PICK")
+        print(target_pose.position)
 
 
         res = self.mv_handler.pick(object_name, pose, target_pressure, arm_index, c_eef_step, c_jump_threshold)
@@ -443,6 +586,13 @@ class Myrobot:
         print("/// move_group commander ///")
         print("current group: {}".format(self.mv_handler.get_current_name()))
         print("end effector: {}".format(self.mv_handler.current_move_group.get_end_effector_link()))
+        print("goal_joint_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_joint_tolerance()))
+        print("goal_orientation_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_orientation_tolerance()))
+        print("get_goal_position_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_position_tolerance()))
+        print("get_goal_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_tolerance()))
+        print("planning frame: {}".format(self.mv_handler.current_move_group.get_planning_frame()))
+        print("planning time: {}".format(self.mv_handler.current_move_group.get_planning_time()))
+        print("pose reference frame: {}".format(self.mv_handler.current_move_group.get_pose_reference_frame()))
         print("-" * 30)
 
 
@@ -540,7 +690,7 @@ if __name__ == "__main__":
         # TODO: pull up arm index computation from pick
         is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
                     grasp_quality=obj.score,
-                    approach_desired_distance=insert_depth * 2,
+                    approach_desired_distance=insert_depth * 1.0, ## 重要
                     retreat_desired_distance=insert_depth * 2,
                     approach_min_distance=insert_depth * 1.2,
                     retreat_min_distance= insert_depth * 1.2,

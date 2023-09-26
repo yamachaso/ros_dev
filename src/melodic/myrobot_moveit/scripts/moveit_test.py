@@ -21,9 +21,10 @@ def main():
     move_group = moveit_commander.MoveGroupCommander("right_arm") # for open_manipulator
     # ref: https://answers.ros.org/question/334902/moveit-control-gripper-instead-of-panda_link8-eff/
     # move_group.set_end_effector_link("right_panda_hand_tip")
+    move_group.set_planner_id('RRTConnectkConfigDefault')
     pose = move_group.get_current_pose()
     print(pose)
-    pose.pose.position.x += 0.1
+    pose.pose.position.z -= 0.1
     # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
     move_group.set_pose_target(pose, end_effector_link="right_soft_hand_tip")
 
