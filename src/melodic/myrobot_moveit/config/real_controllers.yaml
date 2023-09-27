@@ -86,6 +86,31 @@ myrobot:
         goal_time: 1
         stopped_velocity_tolerance: 0
 
+    right_cartesian_motion_controller:
+        type: "position_controllers/CartesianMotionController"
+        end_effector_link: "right_soft_hand_tip"
+        robot_base_link: "body"
+        target_frame_topic: "/target_frame/right"
+
+        joints:
+          # - joint_back
+          - right_joint_sholder
+          - right_joint_1
+          - right_joint_2
+          - right_joint_3
+          - right_joint_4
+          - right_joint_5
+          - right_joint_6
+
+        pd_gains:
+            trans_x: {p: 30.0}
+            trans_y: {p: 30.0}
+            trans_z: {p: 30.0}
+            rot_x: {p: 120.0}
+            rot_y: {p: 120.0}
+            rot_z: {p: 120.0}
+
+
 # ////////////////////////////////////////////////////////////////
 # Publish all joint states
 # Creates the /joint_states topic necessary in ROS
@@ -97,9 +122,10 @@ _controller_template: &_controller_template
   allow_partial_joints_goal: True
   joints: []
 controller_list:
-  - <<: *_controller_template
-    name: myrobot/left_arm/left_arm_controller
-    joints: *left_arm_joints
+  #  コメントアウトしないとAction client not connected: myrobot/left_arm/left_arm_controller/follow_joint_trajectoryと言われる
+  # - <<: *_controller_template
+  #   name: myrobot/left_arm/left_arm_controller
+  #   joints: *left_arm_joints
   - <<: *_controller_template
     name: myrobot/right_arm/right_arm_controller
     joints: *right_arm_joints
