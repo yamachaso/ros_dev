@@ -163,4 +163,12 @@
     args="record -a"
     if="$(arg record_all)" />
 
+
+    <include file="$(find timed_roslaunch)/timed_roslaunch.launch">
+        <arg name="time" value="3" />
+        <arg name="pkg" value="myrobot_moveit" />
+        <arg name="file" value="twist_to_pose.launch" />
+     </include>
+    <!-- <include file="$(find myrobot_moveit)/launch/twist_to_pose.launch" /> -->   
+
 </launch>

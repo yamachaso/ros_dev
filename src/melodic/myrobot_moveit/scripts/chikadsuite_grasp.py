@@ -6,12 +6,12 @@ import math
 import numpy as np
 import rospy
 from actionlib import SimpleActionClient
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Empty
 import moveit_commander as mc
 from moveit_msgs.msg import Grasp as BaseGrasp, Constraints, OrientationConstraint
 from detect.msg import VisualizeTargetAction, VisualizeTargetGoal
 from grasp_detection_client import GraspDetectionClient
-from geometry_msgs.msg import Vector3, Quaternion, PoseStamped, Pose
+from geometry_msgs.msg import Vector3, Quaternion, PoseStamped, Pose, Twist
 from sensor_msgs.msg import Image
 from trajectory_msgs.msg import JointTrajectoryPoint
 from tf.transformations import quaternion_from_euler
@@ -21,6 +21,16 @@ from std_msgs.msg import Float64MultiArray
 
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
+
+from controller_manager_msgs.srv import SwitchController
+
+def call(ns, cls, **kwargs):
+    rospy.wait_for_service(ns)
+    service = rospy.ServiceProxy(ns, cls)
+    response = service(**kwargs)
+    print(response.ok)
+    if not response.ok:
+        print(response)
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
@@ -154,7 +164,7 @@ class MoveGroupHandler:
         # pre_pose = self.current_eef_default_pose
         pre_pose = self.current_move_group.get_current_pose().pose
         pre_pose.position = target_pose.position #TODO TMP
-        pre_pose.position.z -= 0.15
+        # pre_pose.position.z -= 0.15
         pre_pose.orientation =  target_pose.orientation
         print("pre_pose : ", pre_pose)
         plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
@@ -169,12 +179,6 @@ class MoveGroupHandler:
         self.execute(plan, wait=True)
 
         rospy.sleep(1)
-
-
-        # これが大事？
-        self.current_move_group.stop()
-        self.current_move_group.clear_pose_targets()
-
 
 
         # pick_pose = self.current_move_group.get_current_pose()
@@ -298,33 +302,152 @@ class MoveGroupHandler:
         # self.current_move_group.clear_pose_targets()
 
 
+        print("\033[92m{}\033[0m".format("##################################"))
+
+        rospy.sleep(1)
+            
+        startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+        empty_msg = Empty()
+        startup_pub.publish(empty_msg)
+
+        try:
+            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
+                start_controllers=["right_cartesian_motion_controller"],
+                stop_controllers=["right_arm_controller"],
+                strictness=1, start_asap=False, timeout=0.0)
+
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+
+        cmd_vel_pub = rospy.Publisher('/cmd_vel/right', Twist, queue_size=1)
+        cmd_vel = Twist()
+        cmd_vel.linear.z = 0
+        cmd_vel_pub.publish(cmd_vel)
+
+        myrate = rospy.Rate(100)  # ループの実行レートを10Hzに設定
+
+        start_time = rospy.get_time()  # 開始時刻を取得
+        while not rospy.is_shutdown():
+            cmd_vel_pub.publish(cmd_vel)
+
+            current_time = rospy.get_time()
+            if current_time - start_time >= 2.0:
+                break
+
+            myrate.sleep()
+
+
+
+        print("\033[92m{}\033[0m".format("UP"))
+        cmd_vel_pub.publish(cmd_vel)
+        cmd_vel.linear.z = -0.05
+        start_time = rospy.get_time()  # 開始時刻を取得
+        while not rospy.is_shutdown():
+            cmd_vel_pub.publish(cmd_vel)
+
+            current_time = rospy.get_time()
+            if current_time - start_time >= 2.0:
+                break
+
+            myrate.sleep()
+
+
+
+
+        cmd_vel_pub.publish(cmd_vel)
+        rospy.sleep(3)
+
+
+        startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+        empty_msg = Empty()
+        startup_pub.publish(empty_msg)
+
+        cmd_vel.linear.z = 0
+        cmd_vel_pub.publish(cmd_vel)
+
+        
+
+
+
+
 
         rospy.logerr("grab")
         hand_msg.data = [1.2, 1.2]
         hand_pub.publish(hand_msg)
         rospy.logerr("grabed")
 
-        rospy.sleep(3)
+        rospy.sleep(1)
 
-        self.current_move_group.attach_object(object_name)
+        # self.current_move_group.attach_object(object_name)
 
+        start_time = rospy.get_time()  # 開始時刻を取得
+        while not rospy.is_shutdown():
+            cmd_vel_pub.publish(cmd_vel)
+
+            current_time = rospy.get_time()
+            if current_time - start_time >= 2.0:
+                break
+
+            myrate.sleep()
+
+
+        rospy.logerr("a")
+
+        cmd_vel.linear.z = 0.05
+        start_time = rospy.get_time()  # 開始時刻を取得
+        while not rospy.is_shutdown():
+            cmd_vel_pub.publish(cmd_vel)
+
+            current_time = rospy.get_time()
+            if current_time - start_time >= 2.0:
+                break
+
+            myrate.sleep()
+
+
+        cmd_vel.linear.z = 0
+        cmd_vel_pub.publish(cmd_vel)
+        rospy.logerr("b")
+
+        start_time = rospy.get_time()  # 開始時刻を取得
+        while not rospy.is_shutdown():
+            cmd_vel_pub.publish(cmd_vel)
+
+            current_time = rospy.get_time()
+            if current_time - start_time >= 2.0:
+                break
+
+            myrate.sleep()
 
         # post_pose = pre_pose
-        post_pose = self.current_move_group.get_current_pose().pose
-        print("post_pose : ", post_pose)
-        post_pose.position.z += 0.2 #TODO ハードコード
-        print("post_pose : ", post_pose)
-        plan, plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
-        if plan_score < 0.5:
-            print("pick failed 3...")
-            return False
+        # post_pose = self.current_move_group.get_current_pose().pose
+        # print("post_pose : ", post_pose)
+        # post_pose.position.z += 0.2 #TODO ハードコード
+        # print("post_pose : ", post_pose)
+        # plan, plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
+        # if plan_score < 0.5:
+        #     print("pick failed 3...")
+        #     return False
         
-        print("post_pose score", plan_score)
-        print("\033[92m{}\033[0m".format("retreat!!"))
-        self.execute(plan, wait=True)
+        # print("post_pose score", plan_score)
+        # print("\033[92m{}\033[0m".format("retreat!!"))
+        # self.execute(plan, wait=True)
 
-        # hand_msg.data = [0.0, 0.0]
-        # hand_pub.publish(hand_msg)
+        try:
+            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
+                start_controllers=["right_arm_controller"],
+                stop_controllers=["right_cartesian_motion_controller"],
+                strictness=1, start_asap=False, timeout=0.0)
+
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+        print("\033[92m{}\033[0m".format("##################################"))
+
+        rospy.sleep(1)
+
+        rospy.logerr("c")
 
         return True
 
@@ -446,7 +569,8 @@ class Myrobot:
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         start_mv = mv_left_arm if used_camera == "left_camera" else mv_right_arm
         # self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
-        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
+        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
+        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_right_arm)
 
         self.gd_cli = GraspDetectionClient( 
             fps=fps, 
@@ -645,10 +769,15 @@ if __name__ == "__main__":
     registered_objects = []
 
 
+    # 最初のメッセージがなぜか無視されるので、ダミーで一回パブリッシュ
     hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
     hand_msg = Float64MultiArray()
     hand_msg.data = [0.0, 0.0]
     hand_pub.publish(hand_msg)
+    # 同様の理由でここでもパブリッシュ
+    startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+    empty_msg = Empty()
+    startup_pub.publish(empty_msg)
 
     while not rospy.is_shutdown():
         rospy.logerr("loop start")
