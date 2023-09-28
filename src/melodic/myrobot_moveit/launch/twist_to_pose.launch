@@ -8,5 +8,6 @@
         <param name="publishing_rate" value="10"/>
     </node>
 
+    <node name="cmd_vel_publisher" pkg="myrobot_moveit" type="cmd_vel_publisher.py" output="screen" />
 
 </launch>
