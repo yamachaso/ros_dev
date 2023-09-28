@@ -148,7 +148,7 @@ class MoveGroupHandler:
             return False
 
     def pick(self, object_name, target_pose, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
-        rospy.logwarn("pick_fucntion")
+        rospy.logwarn("pick_function")
 
         # print("\033[92m{}\033[0m".format("target_pressure"))
         # print("\033[92m{}\033[0m".format(target_pressure))
@@ -166,11 +166,8 @@ class MoveGroupHandler:
         pre_pose.position = target_pose.position #TODO TMP
         # pre_pose.position.z -= 0.15
         pre_pose.orientation =  target_pose.orientation
-        print("pre_pose : ", pre_pose)
         plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
-        print("pre_pose position")
-        print(pre_pose.position)
-        print("pre_pose score", plan_score)
+        print("pose score", plan_score)
         if plan_score < 0.5:
             print("pick failed 1...")
             return False
@@ -205,13 +202,13 @@ class MoveGroupHandler:
         lower_speed.data = -0.1
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.4)
+        rospy.sleep(1.3)
 
 
         lower_speed.data = 0
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(2)
+        rospy.sleep(1.3)
 
         rospy.logerr("grab")
         hand_msg.data = [1.2, 1.2]
@@ -224,12 +221,12 @@ class MoveGroupHandler:
         lower_speed.data = 0.1
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.4)
+        rospy.sleep(1.3)
 
         lower_speed.data = 0
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.5)
+        rospy.sleep(1.35)
 
 
         try:

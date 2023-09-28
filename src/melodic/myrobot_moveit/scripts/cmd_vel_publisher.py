@@ -34,10 +34,10 @@ class cmdVelPublisher:
 
     def timerCallback(self, event):
         if self.target - self.last_target > 0.0:
-            self.twist.linear.z += 0.005
+            self.twist.linear.z += 0.01
             self.twist.linear.z = min(self.twist.linear.z, self.target)
         elif self.target - self.last_target < 0.0:
-            self.twist.linear.z -= 0.005
+            self.twist.linear.z -= 0.01
             self.twist.linear.z = max(self.twist.linear.z, self.target)
         self.pub.publish(self.twist)
 
