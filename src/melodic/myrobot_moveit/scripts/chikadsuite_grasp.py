@@ -147,7 +147,7 @@ class MoveGroupHandler:
             print("approach failed...")
             return False
 
-    def pick(self, object_name, target_pose, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
+    def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
         rospy.logwarn("pick_function")
 
         # print("\033[92m{}\033[0m".format("target_pressure"))
@@ -155,7 +155,7 @@ class MoveGroupHandler:
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
-        hand_msg.data = [target_pressure, target_pressure]
+        hand_msg.data = [0.0, target_pressure] # 右アームのみ
         hand_pub.publish(hand_msg)
 
         
@@ -197,36 +197,42 @@ class MoveGroupHandler:
             
         print("\033[92m{}\033[0m".format("DOWN"))
 
+        # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
+        move_time = 1.35 - access_distance / 0.03 * 0.1
+
+        print("access_distance : \033[92m{}\033[0m".format(access_distance))
+        print("move_time : \033[92m{}\033[0m".format(move_time))
+
         lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
         lower_speed = Float64()
         lower_speed.data = -0.1
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.2)
+        rospy.sleep(move_time)
 
 
         lower_speed.data = 0
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.2)
+        rospy.sleep(move_time)
 
         rospy.logerr("grab")
-        hand_msg.data = [1.0, 1.0]
+        hand_msg.data = [0.0, 1.2]
         hand_pub.publish(hand_msg)
         rospy.logerr("grabed")
 
-        rospy.sleep(1)
+        rospy.sleep(1.5)
 
 
         lower_speed.data = 0.1
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.2)
+        rospy.sleep(move_time)
 
         lower_speed.data = 0
         lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.25)
+        rospy.sleep(move_time + 0.05)
 
 
         try:
@@ -507,7 +513,7 @@ class Myrobot:
         res = self.mv_handler.approach(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
         return res, arm_index
     
-    def pick(self, object_name, target_pose, target_angle, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
+    def pick(self, object_name, target_pose, target_angle, access_distance, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
         # obj_position_point = target_pose.position
 
         # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z)
@@ -521,7 +527,7 @@ class Myrobot:
         print(target_pose.position)
 
 
-        res = self.mv_handler.pick(object_name, pose, target_pressure, arm_index, c_eef_step, c_jump_threshold)
+        res = self.mv_handler.pick(object_name, pose, access_distance, target_pressure, arm_index, c_eef_step, c_jump_threshold)
         return res
         
 
@@ -635,7 +641,7 @@ if __name__ == "__main__":
     lower_speed.data = 0
     lower_speed_pub.publish(lower_speed)
 
-
+    is_in_peril = False
 
     while not rospy.is_shutdown():
         rospy.logerr("loop start")
@@ -691,7 +697,7 @@ if __name__ == "__main__":
             res = myrobot.calcurate_insertion()
             
             if res.success:
-                myrobot.pick(obj_name, res.pose, res.angle, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+                myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
                 is_pick_successed = True
                 print("#$#$#$#$#$#$#$#$#$#$")
             else:
