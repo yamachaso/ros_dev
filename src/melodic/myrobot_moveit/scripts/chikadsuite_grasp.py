@@ -22,28 +22,19 @@ from std_msgs.msg import Float64MultiArray
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
 
+from modules.ros.utils import call
 from controller_manager_msgs.srv import SwitchController
 
-def call(ns, cls, **kwargs):
-    rospy.wait_for_service(ns)
-    service = rospy.ServiceProxy(ns, cls)
-    response = service(**kwargs)
-    print(response.ok)
-    if not response.ok:
-        print(response)
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
         super(MoveGroup, self).__init__(name)
-        rospy.logerr("a")
         self.constraint = constraint
         self.parent = parent
-        rospy.logerr("b")
         # self.next = mc.MoveGroupCommander(next_name)
         self.set_path_constraints(constraint)
         self.set_support_surface_name(support_surface_name)
         self.set_planning_time(planning_time)
-        rospy.logerr("c")
 
     # ジョイント名をキー, 関節角度値を値とした辞書
     def get_current_joint_dict(self):
@@ -401,9 +392,7 @@ class Myrobot:
             right_hand_constraint = Constraints()
         rospy.logerr("4")
         # 実機だとここで止まってしまうことがある。
-        # myrobot_moveit/scripts/moveit_test.pyを一度実行するとなぜか直る
-        # left groups
-        # test_group = mc.MoveGroupCommander("right_arm")
+
         mv_base_to_left_arm = MoveGroup("base_and_left_arm", constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         rospy.logerr("SUCCESS")
         mv_body_to_left_arm = MoveGroup("body_and_left_arm", parent=mv_base_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)

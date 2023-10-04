@@ -1,4 +1,5 @@
 import numpy as np
+import rospy
 from std_msgs.msg import MultiArrayDimension
 
 # ref: https://qiita.com/kotarouetake/items/3c467e3c8aee0c51a50f
@@ -17,3 +18,11 @@ def multiarray2numpy(pytype, dtype, multiarray):
     dims = [x.size for x in multiarray.layout.dim]
     res = np.array(multiarray.data, dtype=pytype).reshape(dims).astype(dtype)
     return res
+
+def call(ns, cls, **kwargs):
+    rospy.wait_for_service(ns)
+    service = rospy.ServiceProxy(ns, cls)
+    response = service(**kwargs)
+    print(response.ok)
+    if not response.ok:
+        print(response)
