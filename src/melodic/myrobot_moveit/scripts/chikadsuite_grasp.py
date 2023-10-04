@@ -25,6 +25,8 @@ from sensor_msgs.msg import JointState
 from modules.ros.utils import call
 from controller_manager_msgs.srv import SwitchController
 
+from modules.colored_print import *
+
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
@@ -356,7 +358,8 @@ class Myrobot:
         # whole group
         # TODO: constraintあてる
         mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("SUCCESS")
+ 
+        printg("movegroup load : SUCCESS")
 
 
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
@@ -655,8 +658,8 @@ if __name__ == "__main__":
 
         link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
         myrobot.scene_handler.remove_attached_object(link) 
-        # print("will initialize")
-        print("\033[92m{}\033[0m".format("will initialize"))
+
+        printg("will initialize")
 
         myrobot.initialize_whole_pose()
         # if is_place_successed:
@@ -668,7 +671,7 @@ if __name__ == "__main__":
         hand_pub.publish(hand_msg)
 
 
-        print("\033[92m{}\033[0m".format("initialized!!"))
+        printg("initialized!!")
 
 
         myrobot.scene_handler.remove_world_object(obj_name)
