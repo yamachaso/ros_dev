@@ -61,7 +61,6 @@ class converter:
         self.rot.y = start.transform.rotation.y
         self.rot.z = start.transform.rotation.z
         self.rot.w = start.transform.rotation.w
-        rospy.logerr("in start up!!")
         
         return True
 

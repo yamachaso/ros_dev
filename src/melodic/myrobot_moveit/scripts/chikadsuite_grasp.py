@@ -120,19 +120,6 @@ class MoveGroupHandler:
         print("plan_score", plan_score)
         if plan_score > 0.9: # TODO
             self.execute(plan, wait=True)
-
-            # rospy.logerr("grab")
-            # hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-            # hand_msg = Float64MultiArray()
-            # hand_msg.data = [0.8, 0.8]
-            # hand_pub.publish(hand_msg)
-            # rospy.logerr("grabed")
-
-            # self.current_move_group.attach_object(object_name)
-
-            # hand_msg.data = [0.0, 0.0]
-            # hand_pub.publish(hand_msg)
-
             return True
         else:
             print("approach failed...")
@@ -141,15 +128,11 @@ class MoveGroupHandler:
     def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
         rospy.logwarn("pick_function")
 
-        # print("\033[92m{}\033[0m".format("target_pressure"))
-        # print("\033[92m{}\033[0m".format(target_pressure))
-
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0.0, target_pressure] # 右アームのみ
         hand_pub.publish(hand_msg)
 
-        
         rospy.logerr(target_pressure)
 
         # pre_pose = self.current_eef_default_pose
@@ -260,23 +243,6 @@ class MoveGroupHandler:
             rospy.logerr("No motion plan found")
         self.current_move_group.execute(plan, wait=True)
 
-        # set_max_velocity_scaling_factor
-        # plan, plan_score = self.current_move_group.compute_cartesian_path([place_pose], c_eef_step, c_jump_threshold)
-        # if plan_score < 0.5:
-        #     print("pick failed 1...")
-        #     return False
-        
-        # self.execute(plan, wait=True)
-
-        # place_pose.position.z -= 0.1
-        # plan, plan_score = self.current_move_group.compute_cartesian_path([place_pose], c_eef_step, c_jump_threshold)
-        # if plan_score < 0.5:
-        #     print("pick failed 2...")
-        #     return False
-        
-        # self.execute(plan, wait=True)
-
-
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0, 0]
@@ -292,19 +258,8 @@ class MoveGroupHandler:
             rospy.logerr("No motion plan found")
         self.current_move_group.execute(plan, wait=True)
 
-        # place_pose.position.z += 0.1
-        # plan, plan_score = self.current_move_group.compute_cartesian_path([place_pose], c_eef_step, c_jump_threshold)
-        # if plan_score < 0.5:
-        #     print("pick failed 3...")
-        #     return False
-        
-        # self.execute(plan, wait=True)
-
-    
-
         return True
-        # self.set_current_move_group(self.current_move_group.parent, self.current_eef_default_pose) # tmp             
-        # return bool(self.current_move_group.place(object_name, locations))
+
 
     def get_current_name(self):
         return self.current_move_group.get_name()
@@ -390,11 +345,8 @@ class Myrobot:
         else:
             left_hand_constraint = Constraints()
             right_hand_constraint = Constraints()
-        rospy.logerr("4")
-        # 実機だとここで止まってしまうことがある。
 
         mv_base_to_left_arm = MoveGroup("base_and_left_arm", constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        rospy.logerr("SUCCESS")
         mv_body_to_left_arm = MoveGroup("body_and_left_arm", parent=mv_base_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         mv_left_arm = MoveGroup("left_arm", parent=mv_body_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         # right groups
@@ -404,13 +356,8 @@ class Myrobot:
         # whole group
         # TODO: constraintあてる
         mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
+        rospy.logerr("SUCCESS")
 
-
-        # TMP
-        # mv_right_arm.set_goal_joint_tolerance(0.07)
-        # mv_right_arm.set_goal_orientation_tolerance(0.07)
-        # mv_right_arm.set_goal_position_tolerance(0.001)
-        # TMP end
 
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
