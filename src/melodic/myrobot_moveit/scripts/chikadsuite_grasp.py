@@ -107,35 +107,36 @@ class MoveGroupHandler:
         return res
 
     def approach(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
-        rospy.logwarn("approach_fucntion")
+        printb("approach planning start")
         pre_pose = self.current_eef_default_pose
         grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
         apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
-        print("apploach_desired_distance : ", apploach_desired_distance)
-        print(grasp_position)
         pre_pose.position.x = grasp_position.x
         pre_pose.position.y = grasp_position.y
         pre_pose.position.z =  grasp_position.z + apploach_desired_distance
         pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
         waypoints = [pre_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
-        print("plan_score", plan_score)
+        printc("plan_score : {}".format(plan_score))
+        
         if plan_score > 0.9: # TODO
+            printb("approach execution")
             self.execute(plan, wait=True)
             return True
         else:
-            print("approach failed...")
+            printr("approach execution failed...")
             return False
 
     def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
-        rospy.logwarn("pick_function")
+        printb("pick planning start")
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0.0, target_pressure] # 右アームのみ
         hand_pub.publish(hand_msg)
 
-        rospy.logerr(target_pressure)
+        printc("target_pressure : {}".format(target_pressure))
+
 
         # pre_pose = self.current_eef_default_pose
         pre_pose = self.current_move_group.get_current_pose().pose
@@ -148,12 +149,12 @@ class MoveGroupHandler:
             print("pick failed 1...")
             return False
         
-        print("\033[92m{}\033[0m".format("pre pose"))
+        printb("pre pose execution")
         self.execute(plan, wait=True)
 
         rospy.sleep(0.1)
 
-        print("\033[92m{}\033[0m".format("##################################"))
+        print("##################################")
 
         # 先に位置姿勢と取得して、その後コントローラーを切り替える
         # さもないと指令加速度過大になりがち
@@ -171,14 +172,15 @@ class MoveGroupHandler:
             print("Service call failed: %s" % e)
 
             
-        print("\033[92m{}\033[0m".format("DOWN"))
+        
 
         # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
         move_time = 1.35 - access_distance / 0.03 * 0.1
 
-        print("access_distance : \033[92m{}\033[0m".format(access_distance))
-        print("move_time : \033[92m{}\033[0m".format(move_time))
+        printc("access_distance : {}".format(access_distance))
+        printc("move_time : {}".format(move_time))
 
+        printb("down execution")
         lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
         lower_speed = Float64()
         lower_speed.data = -0.1
@@ -192,14 +194,14 @@ class MoveGroupHandler:
 
         rospy.sleep(move_time)
 
-        rospy.logerr("grab")
+        printb("grab execution")
         hand_msg.data = [0.0, 1.2]
         hand_pub.publish(hand_msg)
-        rospy.logerr("grabed")
+        printb("grabed")
 
         rospy.sleep(1.5)
 
-
+        printb("up execution")
         lower_speed.data = 0.1
         lower_speed_pub.publish(lower_speed)
 
@@ -220,7 +222,7 @@ class MoveGroupHandler:
         except rospy.ServiceException as e:
             print("Service call failed: %s" % e)
 
-        print("\033[92m{}\033[0m".format("##################################"))
+        print("##################################")
 
         rospy.sleep(0.5)
 
@@ -236,6 +238,7 @@ class MoveGroupHandler:
         plan = self.current_move_group.plan()
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
+            return False
         self.current_move_group.execute(plan, wait=True)
 
         place_pose.position.z -= 0.1
@@ -243,6 +246,7 @@ class MoveGroupHandler:
         plan = self.current_move_group.plan()
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
+            return False
         self.current_move_group.execute(plan, wait=True)
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
@@ -258,6 +262,7 @@ class MoveGroupHandler:
         plan = self.current_move_group.plan()
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
+            return False
         self.current_move_group.execute(plan, wait=True)
 
         return True
@@ -376,8 +381,6 @@ class Myrobot:
             points_topic=points_topic,
             wait=wait
         )
-
-        rospy.logerr("7")
 
     def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
         q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
@@ -597,7 +600,6 @@ if __name__ == "__main__":
         # ordered_indexes = np.argsort(scores)[::-1] # 降順
         target_index = ordered_indexes[0]
 
-        rospy.logerr("a1")
         obj = objects[target_index]
         obj_name = "object_{}".format(len(registered_objects))
         # TMP: ズレの補正
@@ -628,33 +630,27 @@ if __name__ == "__main__":
                     retreat_min_distance= insert_depth * 1.2,
                     manual_wait=manual_wait
         )
-        print("is_approach_successed : \033[92m{}\033[0m".format(is_approach_successed))
+        printy("is_approach_successed : {}".format(is_approach_successed))
 
         is_pick_successed = False
         if is_approach_successed:
-            print("\033[92m{}\033[0m".format("is_approach_successed"))
             res = myrobot.calcurate_insertion()
-            
             if res.success:
-                myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
-                is_pick_successed = True
-                print("#$#$#$#$#$#$#$#$#$#$")
+                is_pick_successed = myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
             else:
-                print("\033[92m{}\033[0m".format("no good cabbage..."))
-            print("\033[92m{}\033[0m".format("cccc"))
+                printr("no good cabbage...")
+        printy("is_pick_successed : {}".format(is_pick_successed))
             
-
-
-
         print("pick result for the {}-th object: {}".format(target_index, is_approach_successed))
+
         is_place_successed = False
-        # if not grasp_only and is_pick_successed:
-        print("is_pick_successed : \033[92m{}\033[0m".format(is_pick_successed))
         if is_pick_successed:
             # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
             myrobot.initialize_whole_pose()
             is_place_successed = myrobot.place(arm_index, obj_name)
             print("place result for the {}-th object: {}".format(target_index, is_place_successed))
+        printy("is_place_successed : {}".format(is_place_successed))
+
 
         link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
         myrobot.scene_handler.remove_attached_object(link) 
@@ -662,17 +658,13 @@ if __name__ == "__main__":
         printg("will initialize")
 
         myrobot.initialize_whole_pose()
-        # if is_place_successed:
-        #     break
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0.0, 0.0]
         hand_pub.publish(hand_msg)
 
-
         printg("initialized!!")
-
 
         myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()
