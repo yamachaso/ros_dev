@@ -6,7 +6,7 @@ import math
 import numpy as np
 import rospy
 from actionlib import SimpleActionClient
-from std_msgs.msg import Header, Empty, Float64
+from std_msgs.msg import Header, Empty, Float64, Bool
 import moveit_commander as mc
 from moveit_msgs.msg import Grasp as BaseGrasp, Constraints, OrientationConstraint
 from detect.msg import VisualizeTargetAction, VisualizeTargetGoal
@@ -53,6 +53,12 @@ class MoveGroupHandler:
         self.whole_move_group = whole_move_group
         self.whole_name = whole_move_group.get_name()
         self.set_current_move_group(self.start_move_group, self.start_eef_default_pose)
+
+        self.is_in_peril = False
+        self.sub = rospy.Subscriber("/is_in_peril", Bool, self.set_peril)
+
+    def set_peril(self, msg):
+        self.is_in_peril = msg.data
 
     def set_current_move_group(self, move_group, default_eef_pose=None):
         self.current_move_group = move_group
@@ -121,6 +127,8 @@ class MoveGroupHandler:
         
         if plan_score > 0.9: # TODO
             printb("approach execution")
+            if self.is_in_peril:
+                return False
             self.execute(plan, wait=True)
             return True
         else:
@@ -130,6 +138,9 @@ class MoveGroupHandler:
     def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
         printb("pick planning start")
 
+        printb("hand adjustment execution")
+        if self.is_in_peril:
+                return False
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0.0, target_pressure] # 右アームのみ
@@ -150,6 +161,8 @@ class MoveGroupHandler:
             return False
         
         printb("pre pose execution")
+        if self.is_in_peril:
+                return False
         self.execute(plan, wait=True)
 
         rospy.sleep(0.1)
@@ -181,6 +194,8 @@ class MoveGroupHandler:
         printc("move_time : {}".format(move_time))
 
         printb("down execution")
+        if self.is_in_peril:
+                return False
         lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
         lower_speed = Float64()
         lower_speed.data = -0.1
@@ -195,6 +210,8 @@ class MoveGroupHandler:
         rospy.sleep(move_time)
 
         printb("grab execution")
+        if self.is_in_peril:
+                return False
         hand_msg.data = [0.0, 1.2]
         hand_pub.publish(hand_msg)
         printb("grabed")
@@ -202,11 +219,16 @@ class MoveGroupHandler:
         rospy.sleep(1.5)
 
         printb("up execution")
+        if self.is_in_peril:
+                return False
         lower_speed.data = 0.1
         lower_speed_pub.publish(lower_speed)
 
         rospy.sleep(move_time)
 
+        printb("up stop execution")
+        if self.is_in_peril:
+                return False
         lower_speed.data = 0
         lower_speed_pub.publish(lower_speed)
 
@@ -239,6 +261,9 @@ class MoveGroupHandler:
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
             return False
+        printb("pre place execution")
+        if self.is_in_peril:
+                return False
         self.current_move_group.execute(plan, wait=True)
 
         place_pose.position.z -= 0.1
@@ -247,8 +272,13 @@ class MoveGroupHandler:
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
             return False
+        if self.is_in_peril:
+                return False
+        printb("place execution")
         self.current_move_group.execute(plan, wait=True)
 
+        if self.is_in_peril:
+                return False
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
         hand_msg.data = [0, 0]
@@ -263,6 +293,9 @@ class MoveGroupHandler:
         if not plan.joint_trajectory.points:
             rospy.logerr("No motion plan found")
             return False
+        printb("post place execution")
+        if self.is_in_peril:
+                return False
         self.current_move_group.execute(plan, wait=True)
 
         return True
@@ -381,6 +414,12 @@ class Myrobot:
             points_topic=points_topic,
             wait=wait
         )
+
+    def is_in_peril(self):
+        return self.mv_handler.is_in_peril
+    
+    def set_robot_status_good(self):
+        self.mv_handler.is_in_peril = False
 
     def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
         q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
@@ -586,6 +625,10 @@ if __name__ == "__main__":
     is_in_peril = False
 
     while not rospy.is_shutdown():
+        if myrobot.is_in_peril():
+            printr("now robot is in peril...")
+            rospy.sleep(1)
+            continue
         rospy.logerr("loop start")
         rospy.sleep(0.1)
         # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
@@ -633,7 +676,7 @@ if __name__ == "__main__":
         printy("is_approach_successed : {}".format(is_approach_successed))
 
         is_pick_successed = False
-        if is_approach_successed:
+        if is_approach_successed and not myrobot.is_in_peril():
             res = myrobot.calcurate_insertion()
             if res.success:
                 is_pick_successed = myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
@@ -644,7 +687,7 @@ if __name__ == "__main__":
         print("pick result for the {}-th object: {}".format(target_index, is_approach_successed))
 
         is_place_successed = False
-        if is_pick_successed:
+        if is_pick_successed and not myrobot.is_in_peril():
             # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
             myrobot.initialize_whole_pose()
             is_place_successed = myrobot.place(arm_index, obj_name)
@@ -655,8 +698,13 @@ if __name__ == "__main__":
         link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
         myrobot.scene_handler.remove_attached_object(link) 
 
+
+        if myrobot.is_in_peril():
+            printr("robot has got some error in this loop")
+            continue
         printg("will initialize")
 
+        myrobot.set_robot_status_good()
         myrobot.initialize_whole_pose()
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
