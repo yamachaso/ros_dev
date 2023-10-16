@@ -21,7 +21,8 @@
     <arg name="paused" default="true" />
     <arg name="gazebo_gui" default="true" />
     <arg name="urdf_path" value="$(find myrobot_description)/urdf/$(arg robot_name)_v2.urdf.xacro" />
-    <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" />
+    <!-- <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" /> -->
+    <arg name="world_path" default="$(find myrobot_description)/world/cabbage_stage.world" />
 
     <!-- for custom_denso_robot_control.launch -->
     <arg name="ip_address_cart" default="192.168.11.100" />

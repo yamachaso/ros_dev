@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+  <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <name>cabbage_stage</name>
+      <uri>model://cabbage_stage</uri>
+      <pose>1.5 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>cabbage1</name>
+      <uri>model://cabbage</uri>
+      <pose>1.5 0 0.7 0 0 0</pose>
+    </include>
+    <include>
+      <name>cabbage2</name>
+      <uri>model://cabbage</uri>
+      <pose>1.5 0.2 0.7 0 0 0</pose>
+    </include>
+  </world>
+</sdf>

@@ -114,6 +114,12 @@ class MoveGroupHandler:
 
     def approach(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
         printb("approach planning start")
+
+        hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+        hand_enable_msg = Bool()
+        hand_enable_msg.data = True 
+        hand_enable_pub.publish(hand_enable_msg)
+
         pre_pose = self.current_eef_default_pose
         grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
         apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
@@ -124,7 +130,8 @@ class MoveGroupHandler:
         waypoints = [pre_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         printc("plan_score : {}".format(plan_score))
-        
+
+
         if plan_score > 0.9: # TODO
             printb("approach execution")
             if self.is_in_peril:
@@ -134,6 +141,7 @@ class MoveGroupHandler:
         else:
             printr("approach execution failed...")
             return False
+
 
     def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
         printb("pick planning start")
@@ -188,7 +196,8 @@ class MoveGroupHandler:
         
 
         # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
-        move_time = 1.35 - access_distance / 0.03 * 0.1
+        # move_time = 1.35 - access_distance / 0.03 * 0.1
+        move_time = 1.35 - access_distance * 0.01 
 
         printc("access_distance : {}".format(access_distance))
         printc("move_time : {}".format(move_time))
@@ -283,6 +292,11 @@ class MoveGroupHandler:
         hand_msg = Float64MultiArray()
         hand_msg.data = [0, 0]
         hand_pub.publish(hand_msg)
+
+        hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+        hand_enable_msg = Bool()
+        hand_enable_msg.data = False 
+        hand_enable_pub.publish(hand_enable_msg)
 
         rospy.sleep(2)
 
@@ -482,7 +496,7 @@ class Myrobot:
         finger_joints = ["left_joint_6"] if arm_index == 0 else ["right_joint_6"] 
         grasps = [Grasp(
             position=obj_position_vector,
-            rpy=(math.pi, 0, np.radians(object_msg.angle)),
+            rpy=(math.pi, 0, 0),
             grasp_quality=grasp_quality,
             approach_desired_distance=approach_desired_distance,
             approach_min_distance=approach_min_distance,
@@ -621,6 +635,10 @@ if __name__ == "__main__":
     lower_speed = Float64()
     lower_speed.data = 0
     lower_speed_pub.publish(lower_speed)
+    hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+    hand_enable_msg = Bool()
+    hand_enable_msg.data = True 
+    hand_enable_pub.publish(hand_enable_msg)
 
     is_in_peril = False
 
@@ -632,24 +650,25 @@ if __name__ == "__main__":
         rospy.logerr("loop start")
         rospy.sleep(0.1)
         # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
-        objects = myrobot.detect()
-        print("objects: {}".format(len(objects)))
-        if len(objects) == 0:
-            continue
+        # object = myrobot.detect()
+        # print("objects: {}".format(len(objects)))
+        # if len(objects) == 0:
+        #     continue
 
-        scores = [obj.score for obj in objects]
-        print("scores : ", scores)
-        ordered_indexes = np.argsort(scores)
-        # ordered_indexes = np.argsort(scores)[::-1] # 降順
-        target_index = ordered_indexes[0]
+        # scores = [obj.score for obj in objects]
+        # print("scores : ", scores)
+        # ordered_indexes = np.argsort(scores)
+        # # ordered_indexes = np.argsort(scores)[::-1] # 降順
+        # target_index = ordered_indexes[0]
 
-        obj = objects[target_index]
+        # obj = objects[target_index]
+        obj = myrobot.detect()
         obj_name = "object_{}".format(len(registered_objects))
         # TMP: ズレの補正
         obj.center_pose.pose.position.y -= 0.01
 
         # visualize target
-        vis_cli.send_goal(VisualizeTargetGoal(obj.index))
+        # vis_cli.send_goal(VisualizeTargetGoal(obj.index))
         
         # add object
         obj_pose = obj.center_pose
@@ -663,7 +682,7 @@ if __name__ == "__main__":
 
         
         # pick
-        print("try to pick {}-th object | score: {}".format(target_index, obj.score))
+        print("try to pick | score: {}".format(obj.score))
         # TODO: pull up arm index computation from pick
         is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
                     grasp_quality=obj.score,
@@ -684,14 +703,14 @@ if __name__ == "__main__":
                 printr("no good cabbage...")
         printy("is_pick_successed : {}".format(is_pick_successed))
             
-        print("pick result for the {}-th object: {}".format(target_index, is_approach_successed))
+        print("pick result : {}".format(is_approach_successed))
 
         is_place_successed = False
         if is_pick_successed and not myrobot.is_in_peril():
             # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
             myrobot.initialize_whole_pose()
             is_place_successed = myrobot.place(arm_index, obj_name)
-            print("place result for the {}-th object: {}".format(target_index, is_place_successed))
+            print("place result : {}".format(is_place_successed))
         printy("is_place_successed : {}".format(is_place_successed))
 
 

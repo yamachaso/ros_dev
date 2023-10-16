@@ -17,7 +17,7 @@
             <geometry>
                 <mesh>
                     <scale>0.001 0.001 0.001</scale>
-                    <uri>model://cabbage/cabbage_single.dae</uri>
+                    <uri>model://cabbage/cabbage_single_light.dae</uri>
                 </mesh>
             </geometry>
             <!-- ref: https://qiita.com/Yuya-Shimizu/items/f1a22d430a3f6343b3e7 -->
@@ -40,7 +40,7 @@
             <geometry>
               <mesh>
                 <scale>0.001 0.001 0.001</scale>
-                <uri>model://cabbage/cabbage_single.dae</uri>
+                <uri>model://cabbage/cabbage_single_light.dae</uri>
               </mesh>
             </geometry>
             <material>

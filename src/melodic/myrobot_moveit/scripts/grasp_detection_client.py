@@ -48,7 +48,7 @@ class GraspDetectionClient:
         while self.request is None or self.ts.last_added <= last_added:
             pass
         self.detect_client.send_goal_and_wait(self.request)
-        res = self.detect_client.get_result().objects
+        res = self.detect_client.get_result().object
         return res
     
     def calcurate_insertion(self):
