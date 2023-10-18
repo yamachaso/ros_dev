@@ -183,6 +183,9 @@ class MoveGroupHandler:
         empty_msg = Empty()
         startup_pub.publish(empty_msg)
 
+
+        if self.is_in_peril:
+                return False
         try:
             call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
                 start_controllers=["right_cartesian_motion_controller"],
@@ -684,20 +687,23 @@ if __name__ == "__main__":
         # pick
         print("try to pick | score: {}".format(obj.score))
         # TODO: pull up arm index computation from pick
-        is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
-                    grasp_quality=obj.score,
-                    approach_desired_distance=insert_depth * 1.0, ## 重要
-                    retreat_desired_distance=insert_depth * 2,
-                    approach_min_distance=insert_depth * 1.2,
-                    retreat_min_distance= insert_depth * 1.2,
-                    manual_wait=manual_wait
-        )
+        is_approach_successd = False
+        arm_index = -1
+        if not myrobot.is_in_peril():
+            is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
+                        grasp_quality=obj.score,
+                        approach_desired_distance=insert_depth * 1.0, ## 重要
+                        retreat_desired_distance=insert_depth * 2,
+                        approach_min_distance=insert_depth * 1.2,
+                        retreat_min_distance= insert_depth * 1.2,
+                        manual_wait=manual_wait
+            )
         printy("is_approach_successed : {}".format(is_approach_successed))
 
         is_pick_successed = False
         if is_approach_successed and not myrobot.is_in_peril():
             res = myrobot.calcurate_insertion()
-            if res.success:
+            if res.success and not myrobot.is_in_peril():
                 is_pick_successed = myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
             else:
                 printr("no good cabbage...")
