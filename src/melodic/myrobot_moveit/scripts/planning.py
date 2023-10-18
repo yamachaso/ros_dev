@@ -6,17 +6,27 @@ import math
 import numpy as np
 import rospy
 from actionlib import SimpleActionClient
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Empty, Float64, Bool
 import moveit_commander as mc
 from moveit_msgs.msg import Grasp as BaseGrasp, Constraints, OrientationConstraint
 from detect.msg import VisualizeTargetAction, VisualizeTargetGoal
 from grasp_detection_client import GraspDetectionClient
-from geometry_msgs.msg import Vector3, Quaternion, PoseStamped, Pose
+from geometry_msgs.msg import Vector3, Quaternion, PoseStamped, Pose, Twist
 from sensor_msgs.msg import Image
 from trajectory_msgs.msg import JointTrajectoryPoint
 from tf.transformations import quaternion_from_euler
 
 from octomap_handler import OctomapHandler
+from std_msgs.msg import Float64MultiArray
+
+from moveit_msgs.msg import RobotState
+from sensor_msgs.msg import JointState
+
+from modules.ros.utils import call
+from controller_manager_msgs.srv import SwitchController
+
+from modules.colored_print import *
+
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
@@ -43,6 +53,12 @@ class MoveGroupHandler:
         self.whole_move_group = whole_move_group
         self.whole_name = whole_move_group.get_name()
         self.set_current_move_group(self.start_move_group, self.start_eef_default_pose)
+
+        self.is_in_peril = False
+        self.sub = rospy.Subscriber("/is_in_peril", Bool, self.set_peril)
+
+    def set_peril(self, msg):
+        self.is_in_peril = msg.data
 
     def set_current_move_group(self, move_group, default_eef_pose=None):
         self.current_move_group = move_group
@@ -96,8 +112,14 @@ class MoveGroupHandler:
         self.whole_move_group.clear_pose_targets()
         return res
 
-    def pick(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
-        rospy.logwarn("premove: true")
+    def approach(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
+        printb("approach planning start")
+
+        hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+        hand_enable_msg = Bool()
+        hand_enable_msg.data = True 
+        hand_enable_pub.publish(hand_enable_msg)
+
         pre_pose = self.current_eef_default_pose
         grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
         apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
@@ -107,50 +129,194 @@ class MoveGroupHandler:
         pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
         waypoints = [pre_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
-        if plan_score == 1:
+        printc("plan_score : {}".format(plan_score))
+
+
+        if plan_score > 0.9: # TODO
+            printb("approach execution")
+            if self.is_in_peril:
+                return False
             self.execute(plan, wait=True)
-            post_pose = pre_pose
-            post_pose.position.z -= apploach_desired_distance
-            post_plan, post_plan_score = self.current_move_group.compute_cartesian_path([post_pose], c_eef_step, c_jump_threshold)
-            print("post plan score:", post_plan_score)
-            if manual_wait:
-                # rospy.sleep(5)
-                print("-" * 40)
-                print("please input to approach")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
-            self.execute(post_plan, wait=True)
-            self.current_move_group.attach_object(object_name)
-            retreat_plan, retreat_plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
-            print("retreat plan score:", retreat_plan_score)
-            if manual_wait:
-                # rospy.sleep(5)
-                print("-" * 40)
-                print("please input to retreat")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
-            self.execute(retreat_plan, wait=True)
-            if manual_wait:
-                print("-" * 40)
-                print("please input to place")
-                print("-" * 40)
-                raw_input()
-            else:
-                rospy.sleep(5)
             return True
         else:
-            print("picking failed...")
+            printr("approach execution failed...")
             return False
 
 
-    def place(self, object_name, locations):
-        self.initialize_current_pose(cartesian_mode=True, wait=True)
-        self.set_current_move_group(self.current_move_group.parent, self.current_eef_default_pose) # tmp             
-        return bool(self.current_move_group.place(object_name, locations))
+    def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
+        printb("pick planning start")
+
+        printb("hand adjustment execution")
+        if self.is_in_peril:
+                return False
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [0.0, target_pressure] # 右アームのみ
+        hand_pub.publish(hand_msg)
+
+        printc("target_pressure : {}".format(target_pressure))
+
+
+        # pre_pose = self.current_eef_default_pose
+        pre_pose = self.current_move_group.get_current_pose().pose
+        pre_pose.position = target_pose.position #TODO TMP
+        # pre_pose.position.z -= 0.15
+        pre_pose.orientation =  target_pose.orientation
+        plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
+        print("pose score", plan_score)
+        if plan_score < 0.5:
+            print("pick failed 1...")
+            return False
+        
+        printb("pre pose execution")
+        if self.is_in_peril:
+                return False
+        self.execute(plan, wait=True)
+
+        rospy.sleep(0.1)
+
+        print("##################################")
+
+        # 先に位置姿勢と取得して、その後コントローラーを切り替える
+        # さもないと指令加速度過大になりがち
+        startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+        empty_msg = Empty()
+        startup_pub.publish(empty_msg)
+
+
+        if self.is_in_peril:
+                return False
+        try:
+            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
+                start_controllers=["right_cartesian_motion_controller"],
+                stop_controllers=["right_arm_controller"],
+                strictness=1, start_asap=False, timeout=0.0)
+
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+            
+        
+
+        # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
+        # move_time = 1.35 - access_distance / 0.03 * 0.1
+        move_time = 1.35 - access_distance * 0.01 
+
+        printc("access_distance : {}".format(access_distance))
+        printc("move_time : {}".format(move_time))
+
+        printb("down execution")
+        if self.is_in_peril:
+                return False
+        lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
+        lower_speed = Float64()
+        lower_speed.data = -0.1
+        lower_speed_pub.publish(lower_speed)
+
+        rospy.sleep(move_time)
+
+
+        lower_speed.data = 0
+        lower_speed_pub.publish(lower_speed)
+
+        rospy.sleep(move_time)
+
+        printb("grab execution")
+        if self.is_in_peril:
+                return False
+        hand_msg.data = [0.0, 1.2]
+        hand_pub.publish(hand_msg)
+        printb("grabed")
+
+        rospy.sleep(1.5)
+
+        printb("up execution")
+        if self.is_in_peril:
+                return False
+        lower_speed.data = 0.1
+        lower_speed_pub.publish(lower_speed)
+
+        rospy.sleep(move_time)
+
+        printb("up stop execution")
+        if self.is_in_peril:
+                return False
+        lower_speed.data = 0
+        lower_speed_pub.publish(lower_speed)
+
+        rospy.sleep(move_time + 0.05)
+
+
+        try:
+            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
+                start_controllers=["right_arm_controller"],
+                stop_controllers=["right_cartesian_motion_controller"],
+                strictness=1, start_asap=False, timeout=0.0)
+
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+        print("##################################")
+
+        rospy.sleep(0.5)
+
+        return True
+
+
+    def place(self, object_name, target_pose, c_eef_step=0.001, c_jump_threshold=0.0):
+        place_pose = self.current_move_group.get_current_pose().pose
+        place_pose.position = target_pose.position #TODO TMP
+
+        place_pose.position.z += 0.1
+        self.current_move_group.set_pose_target(place_pose)
+        plan = self.current_move_group.plan()
+        if not plan.joint_trajectory.points:
+            rospy.logerr("No motion plan found")
+            return False
+        printb("pre place execution")
+        if self.is_in_peril:
+                return False
+        self.current_move_group.execute(plan, wait=True)
+
+        place_pose.position.z -= 0.1
+        self.current_move_group.set_pose_target(place_pose)
+        plan = self.current_move_group.plan()
+        if not plan.joint_trajectory.points:
+            rospy.logerr("No motion plan found")
+            return False
+        if self.is_in_peril:
+                return False
+        printb("place execution")
+        self.current_move_group.execute(plan, wait=True)
+
+        if self.is_in_peril:
+                return False
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [0, 0]
+        hand_pub.publish(hand_msg)
+
+        hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+        hand_enable_msg = Bool()
+        hand_enable_msg.data = False 
+        hand_enable_pub.publish(hand_enable_msg)
+
+        rospy.sleep(2)
+
+
+        place_pose.position.z += 0.1
+        self.current_move_group.set_pose_target(place_pose)
+        plan = self.current_move_group.plan()
+        if not plan.joint_trajectory.points:
+            rospy.logerr("No motion plan found")
+            return False
+        printb("post place execution")
+        if self.is_in_peril:
+                return False
+        self.current_move_group.execute(plan, wait=True)
+
+        return True
+
 
     def get_current_name(self):
         return self.current_move_group.get_name()
@@ -237,7 +403,6 @@ class Myrobot:
             left_hand_constraint = Constraints()
             right_hand_constraint = Constraints()
 
-        # left groups
         mv_base_to_left_arm = MoveGroup("base_and_left_arm", constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         mv_body_to_left_arm = MoveGroup("body_and_left_arm", parent=mv_base_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
         mv_left_arm = MoveGroup("left_arm", parent=mv_body_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
@@ -248,12 +413,16 @@ class Myrobot:
         # whole group
         # TODO: constraintあてる
         mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
+ 
+        printg("movegroup load : SUCCESS")
+
 
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
         start_mv = mv_left_arm if used_camera == "left_camera" else mv_right_arm
-        # self.mv_handler = MoveGroupHandler(mv_body_to_left_arm, mv_body_to_right_arm, start_mv, mv_base_to_arms)
-        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
+        # self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
+        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
+        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_right_arm)
 
         self.gd_cli = GraspDetectionClient( 
             fps=fps, 
@@ -262,6 +431,12 @@ class Myrobot:
             points_topic=points_topic,
             wait=wait
         )
+
+    def is_in_peril(self):
+        return self.mv_handler.is_in_peril
+    
+    def set_robot_status_good(self):
+        self.mv_handler.is_in_peril = False
 
     def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
         q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
@@ -305,15 +480,16 @@ class Myrobot:
         res =  self.mv_handler.execute(plan, wait)
         return res
 
-    def pick(self, object_name, object_msg, 
+    def approach(self, object_name, object_msg, 
              c_eef_step=0.01, c_jump_threshold=0.0,
              grasp_quality=1., approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.1, retreat_min_distance=0.05, manual_wait=False):
         obj_position_point = object_msg.center_pose.pose.position
-        z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
-        print("z: {}".format(z))
-        obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, z)
+        # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
+        obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
         # TODO: change grsp frame_id from "base_link" to each hand frame
-        arm_index = self.select_arm(obj_position_vector.y)
+        # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
+        # arm_index = 1
+        arm_index = 0
         # if arm_index == 0:
             # return False, 0
         # if arm_index == 1:
@@ -323,7 +499,7 @@ class Myrobot:
         finger_joints = ["left_joint_6"] if arm_index == 0 else ["right_joint_6"] 
         grasps = [Grasp(
             position=obj_position_vector,
-            rpy=(math.pi, 0, np.radians(object_msg.angle)),
+            rpy=(math.pi, 0, 0),
             grasp_quality=grasp_quality,
             approach_desired_distance=approach_desired_distance,
             approach_min_distance=approach_min_distance,
@@ -332,11 +508,30 @@ class Myrobot:
             finger_joints=finger_joints,
             allowed_touch_objects=[object_name]
         )]
-        res = self.mv_handler.pick(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
+        res = self.mv_handler.approach(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
         return res, arm_index
+    
+    def pick(self, object_name, target_pose, target_angle, access_distance, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
+        # obj_position_point = target_pose.position
+
+        # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z)
+
+        rpy=(math.pi, 0, np.radians(target_angle))
+        q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+        orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        pose = Pose(position=target_pose.position, orientation=orientation)
+        
+        print("in PICK")
+        print(target_pose.position)
+
+
+        res = self.mv_handler.pick(object_name, pose, access_distance, target_pressure, arm_index, c_eef_step, c_jump_threshold)
+        return res
+        
 
     def place(self, arm_index, object_name, approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.01, retreat_min_distance=0.05):       
-        place_position = (0, -1, 0.4)
+        # place_position = (1.1, -0.63, 0.78)
+        place_position = (1.35, -0.63, 0.55)
         pose = Pose()
         pose.position.x, pose.position.y, pose.position.z = place_position
         res = self.mv_handler.place(object_name, pose)
@@ -344,6 +539,9 @@ class Myrobot:
 
     def detect(self):
         return self.gd_cli.detect()
+    
+    def calcurate_insertion(self):
+        return self.gd_cli.calcurate_insertion()
 
     def select_arm(self, y):
         # 0: left, 1: right
@@ -369,6 +567,13 @@ class Myrobot:
         print("/// move_group commander ///")
         print("current group: {}".format(self.mv_handler.get_current_name()))
         print("end effector: {}".format(self.mv_handler.current_move_group.get_end_effector_link()))
+        print("goal_joint_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_joint_tolerance()))
+        print("goal_orientation_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_orientation_tolerance()))
+        print("get_goal_position_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_position_tolerance()))
+        print("get_goal_tolerance: {}".format(self.mv_handler.current_move_group.get_goal_tolerance()))
+        print("planning frame: {}".format(self.mv_handler.current_move_group.get_planning_frame()))
+        print("planning time: {}".format(self.mv_handler.current_move_group.get_planning_time()))
+        print("pose reference frame: {}".format(self.mv_handler.current_move_group.get_pose_reference_frame()))
         print("-" * 30)
 
 
@@ -393,9 +598,10 @@ if __name__ == "__main__":
     rospy.loginfo("################################################")
 
     print("waiting for image topics")
+    rospy.logerr("################################################")
+
     rospy.wait_for_message(image_topic, Image)
     rospy.wait_for_message(depth_topic, Image)
-
 
     print("initializing instances...")
     myrobot = Myrobot(fps=fps, image_topic=image_topic, depth_topic=depth_topic, points_topic=points_topic, 
@@ -413,72 +619,125 @@ if __name__ == "__main__":
     print("initializing pose...")
     myrobot.initialize_whole_pose()
     print("getting around octomap...")
-    myrobot.get_around_octomap(values=[-30, 30, 0], sleep_time=1.0, is_degree=True, should_reset=True)
+    ### myrobot.get_around_octomap(values=[-30, 30, 0], sleep_time=1.0, is_degree=True, should_reset=True)
 
     print("stating detect flow...")
     registered_objects = []
+
+
+    # 最初のメッセージがなぜか無視されるので、ダミーで一回パブリッシュ
+    hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+    hand_msg = Float64MultiArray()
+    hand_msg.data = [0.0, 0.0]
+    hand_pub.publish(hand_msg)
+    # 同様の理由でここでもパブリッシュ
+    startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+    empty_msg = Empty()
+    startup_pub.publish(empty_msg)
+    lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
+    lower_speed = Float64()
+    lower_speed.data = 0
+    lower_speed_pub.publish(lower_speed)
+    hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+    hand_enable_msg = Bool()
+    hand_enable_msg.data = True 
+    hand_enable_pub.publish(hand_enable_msg)
+
+    is_in_peril = False
+
     while not rospy.is_shutdown():
+        if myrobot.is_in_peril():
+            printr("now robot is in peril...")
+            rospy.sleep(1)
+            continue
+        rospy.logerr("loop start")
         rospy.sleep(0.1)
         # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
-        objects = myrobot.detect()
-        print("objects: {}".format(len(objects)))
-        if len(objects) == 0:
-            continue
+        # object = myrobot.detect()
+        # print("objects: {}".format(len(objects)))
+        # if len(objects) == 0:
+        #     continue
 
-        scores = [obj.score for obj in objects]
-        ordered_indexes = np.argsort(scores)[::-1] # 降順
-        for target_index in ordered_indexes:
-            obj = objects[target_index]
-            obj_name = "object_{}".format(len(registered_objects))
-            # TMP: ズレの補正
-            obj.center_pose.pose.position.y -= 0.01
+        # scores = [obj.score for obj in objects]
+        # print("scores : ", scores)
+        # ordered_indexes = np.argsort(scores)
+        # # ordered_indexes = np.argsort(scores)[::-1] # 降順
+        # target_index = ordered_indexes[0]
 
-            # visualize target
-            vis_cli.send_goal(VisualizeTargetGoal(obj.index))
-            
-            # add object
-            obj_pose = obj.center_pose
-            # obj_pose.pose.position.z -= obj.length_to_center / 2
-            obj_pose.pose.orientation = Quaternion()
-            # obj.length_to_center = obj.length_to_center * 1.3
-            insert_depth = obj.length_to_center
-            # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
-            myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
-            myrobot.scene_handler.update_octomap()
-            
-            # pick
-            print("try to pick {}-th object | score: {}".format(target_index, obj.score))
-            # TODO: pull up arm index computation from pick
-            is_pick_successed, arm_index = myrobot.pick(obj_name, obj,
+        # obj = objects[target_index]
+        obj = myrobot.detect()
+        obj_name = "object_{}".format(len(registered_objects))
+        # TMP: ズレの補正
+        obj.center_pose.pose.position.y -= 0.01
+
+        # visualize target
+        # vis_cli.send_goal(VisualizeTargetGoal(obj.index))
+        
+        # add object
+        obj_pose = obj.center_pose
+        # obj_pose.pose.position.z -= obj.length_to_center / 2
+        obj_pose.pose.orientation = Quaternion()
+        # obj.length_to_center = obj.length_to_center * 1.3
+        insert_depth = obj.length_to_center
+        # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
+        myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
+        ### myrobot.scene_handler.update_octomap()
+
+        
+        # pick
+        print("try to pick | score: {}".format(obj.score))
+        # TODO: pull up arm index computation from pick
+        is_approach_successd = False
+        arm_index = -1
+        if not myrobot.is_in_peril():
+            is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
                         grasp_quality=obj.score,
-                        approach_desired_distance=insert_depth * 2,
+                        approach_desired_distance=insert_depth * 1.0, ## 重要
                         retreat_desired_distance=insert_depth * 2,
                         approach_min_distance=insert_depth * 1.2,
                         retreat_min_distance= insert_depth * 1.2,
                         manual_wait=manual_wait
             )
-            print("is_pick_successed : \033[92m{}\033[0m".format(is_pick_successed))
+        printy("is_approach_successed : {}".format(is_approach_successed))
 
-            print("pick result for the {}-th object: {}".format(target_index, is_pick_successed))
-            is_place_successed = False
-            if not grasp_only and is_pick_successed:
-                myrobot.initialize_current_pose(cartesian_mode=True)
-                print("try toc place {}-th object".format(target_index))
-                is_place_successed = myrobot.place(arm_index, obj_name)
-                print("place result for the {}-th object: {}".format(target_index, is_place_successed))
-                # print("will initialize")
-                # myrobot.initialize_whole_pose()
-                # break
-            # else:
-                # print("will initialize")
-                # myrobot.initialize_current_pose(cartesian_mode=True)
+        is_pick_successed = False
+        if is_approach_successed and not myrobot.is_in_peril():
+            res = myrobot.calcurate_insertion()
+            if res.success and not myrobot.is_in_peril():
+                is_pick_successed = myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+            else:
+                printr("no good cabbage...")
+        printy("is_pick_successed : {}".format(is_pick_successed))
+            
+        print("pick result : {}".format(is_approach_successed))
 
-            link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
-            myrobot.scene_handler.remove_attached_object(link) 
-            print("will initialize")
+        is_place_successed = False
+        if is_pick_successed and not myrobot.is_in_peril():
+            # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
             myrobot.initialize_whole_pose()
-            if is_place_successed:
-                break
+            is_place_successed = myrobot.place(arm_index, obj_name)
+            print("place result : {}".format(is_place_successed))
+        printy("is_place_successed : {}".format(is_place_successed))
+
+
+        link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
+        myrobot.scene_handler.remove_attached_object(link) 
+
+
+        if myrobot.is_in_peril():
+            printr("robot has got some error in this loop")
+            continue
+        printg("will initialize")
+
+        myrobot.set_robot_status_good()
+        myrobot.initialize_whole_pose()
+
+        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        hand_msg = Float64MultiArray()
+        hand_msg.data = [0.0, 0.0]
+        hand_pub.publish(hand_msg)
+
+        printg("initialized!!")
 
         myrobot.scene_handler.remove_world_object(obj_name)
-        myrobot.scene_handler.update_octomap()
+        ### myrobot.scene_handler.update_octomap()

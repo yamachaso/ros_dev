@@ -15,7 +15,7 @@ from modules.colored_print import *
 
 from controller_manager_msgs.srv import SwitchController
 
-from chikadsuite_grasp import MoveGroup
+from planning import MoveGroup
 # rostopic pub /hand_emergency std_msgs/Int64MultiArray "data: [0, 1]"
 
 

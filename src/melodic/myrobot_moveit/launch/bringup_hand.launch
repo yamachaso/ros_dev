@@ -152,7 +152,7 @@
     <group if="$(arg enable_auto_planning)">
         <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/> -->
         <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning_hand.py" output="screen"/> -->
-        <node name="auto_planner" pkg="myrobot_moveit" type="chikadsuite_grasp.py" output="screen"/>
+        <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
  
     </group>
     <group unless="$(arg enable_auto_planning)">
