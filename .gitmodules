@@ -14,3 +14,7 @@
 [submodule "src/melodic/cartesian_controllers"]
 	path = src/melodic/cartesian_controllers
 	url = git@github.com:fzi-forschungszentrum-informatik/cartesian_controllers.git
+[submodule "src/noetic/ar_track_alvar"]
+	path = src/noetic/ar_track_alvar
+	url = git@github.com:ros-perception/ar_track_alvar.git
+	branch = noetic-devel
