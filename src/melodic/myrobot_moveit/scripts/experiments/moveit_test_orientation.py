@@ -30,9 +30,16 @@ def main():
 
     angle = 10
     rpy = (np.radians(-30), np.radians(0), math.pi + np.radians(-angle)) # contact : 1
-    rpy = (np.radians(30), np.radians(0), math.pi + np.radians(angle)) # contact : 3
+    rpy = (np.radians(30), np.radians(0), math.pi + np.radians(angle)) # contact : 4
     rpy = (np.radians(0), np.radians(angle), math.pi) # contact : 2
-    rpy = (np.radians(60), np.radians(-angle), math.pi) # contact : 2
+    rpy = (np.radians(60), np.radians(-angle), math.pi) # contact : 8
+    rpy = (np.radians(-15), np.radians(angle), math.pi + np.radians(-angle)) # contact : 3
+    rpy = (np.radians(15), np.radians(angle), math.pi + np.radians(angle)) # contact : 6
+    rpy = (np.radians(45), np.radians(-angle), math.pi + np.radians(angle)) # contact : 12
+    rpy = (np.radians(-45), np.radians(-angle), math.pi + np.radians(-angle)) # contact : 9
+
+
+    
     # rpy = (math.pi, np.radians(0), np.radians(angle))
     # rpy = (180, 0, 0)
     q = quaternion_from_euler(rpy[0], rpy[1], rpy[2], axes="szyx") # x ,y, zの順で回転。引数は 3 ,2 ,1の順番
@@ -53,7 +60,7 @@ def main():
     #     rospy.logerr("No motion plan found")
 
     # モーションプランの計画と実行
-    # move_group.go(wait=True)
+    move_group.go(wait=True)
 
     # 後処理
     move_group.stop()

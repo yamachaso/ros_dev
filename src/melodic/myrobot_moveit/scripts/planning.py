@@ -683,7 +683,8 @@ if __name__ == "__main__":
         myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
         ### myrobot.scene_handler.update_octomap()
 
-        
+        printy("contact : {}".format(obj.contact))
+
         # pick
         print("try to pick | score: {}".format(obj.score))
         # TODO: pull up arm index computation from pick
