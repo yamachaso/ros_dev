@@ -112,7 +112,7 @@ class MoveGroupHandler:
         self.whole_move_group.clear_pose_targets()
         return res
 
-    def approach(self, object_name, grasps, c_eef_step=0.001, c_jump_threshold=0.0, manual_wait=False):
+    def approach(self, object_name, target_pose, approach_desired_distance, c_eef_step=0.001, c_jump_threshold=0.0):
         printb("approach planning start")
 
         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
@@ -120,13 +120,15 @@ class MoveGroupHandler:
         hand_enable_msg.data = True 
         hand_enable_pub.publish(hand_enable_msg)
 
-        pre_pose = self.current_eef_default_pose
-        grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
-        apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
-        pre_pose.position.x = grasp_position.x
-        pre_pose.position.y = grasp_position.y
-        pre_pose.position.z =  grasp_position.z + apploach_desired_distance
-        pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
+        # pre_pose = self.current_eef_default_pose
+        # grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
+        # apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
+        # pre_pose.position.x = grasp_position.x
+        # pre_pose.position.y = grasp_position.y
+        # pre_pose.position.z =  grasp_position.z + apploach_desired_distance
+        # pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
+        pre_pose = target_pose
+        pre_pose.position.z += approach_desired_distance
         waypoints = [pre_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         printc("plan_score : {}".format(plan_score))
@@ -333,43 +335,6 @@ class PlanningSceneHandler(mc.PlanningSceneInterface):
     def update_octomap(self):
         self.oh.update()
 
-class Grasp(BaseGrasp):
-    def __init__(self, grasp_quality, approach_desired_distance, approach_min_distance, 
-                 retreat_desired_distance, retreat_min_distance, 
-                 position=None, orientation=None, xyz=(0, 0, 0), rpy=(0, 0, 0), 
-                 frame_id="base_link", finger_joints=[], allowed_touch_objects=[]):
-        super(Grasp, self).__init__()
-        # setting grasp-pose: this is for parent_link
-        self.grasp_pose.header.frame_id = frame_id
-        self.allowed_touch_objects = allowed_touch_objects
-        self.grasp_quality = grasp_quality
-        if position is None:
-            position = Vector3(xyz[0], xyz[1], xyz[2])
-        if orientation is None:
-            q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
-            orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-        self.grasp_pose.pose.position = position
-        self.grasp_pose.pose.orientation = orientation
-        # setting pre-grasp approach
-        self.pre_grasp_approach.direction.header.frame_id = frame_id
-        self.pre_grasp_approach.direction.vector.z = -1
-        self.pre_grasp_approach.min_distance = approach_min_distance
-        self.pre_grasp_approach.desired_distance = approach_desired_distance
-        # setting post-grasp retreat
-        self.post_grasp_retreat.direction.header.frame_id = frame_id
-        self.post_grasp_retreat.direction.vector.z = 1
-        self.post_grasp_retreat.min_distance = retreat_min_distance
-        self.post_grasp_retreat.desired_distance = retreat_desired_distance
-        # setting posture of eef before grasp
-        self.pre_grasp_posture.joint_names = finger_joints
-        self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
-        # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
-        # setting posture of eef during grasp
-        self.grasp_posture.joint_names = finger_joints
-        self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
-        # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
-
-
 
 class Myrobot:
     def __init__(self, fps, image_topic, depth_topic, points_topic, raw_point_topics, wait = True, use_constraint = False, add_ground = True, used_camera = "left_camera"):
@@ -480,35 +445,35 @@ class Myrobot:
         res =  self.mv_handler.execute(plan, wait)
         return res
 
-    def approach(self, object_name, object_msg, 
-             c_eef_step=0.01, c_jump_threshold=0.0,
-             grasp_quality=1., approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.1, retreat_min_distance=0.05, manual_wait=False):
-        obj_position_point = object_msg.center_pose.pose.position
-        # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
-        obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
-        # TODO: change grsp frame_id from "base_link" to each hand frame
-        # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
-        # arm_index = 1
-        arm_index = 0
-        # if arm_index == 0:
-            # return False, 0
-        # if arm_index == 1:
-        #     return False, 1
-        # TMP: active jointでないといけない & 実機で存在しない関節を指定するとエラー & 空だとretreatが機能しない -> アームの関節を指定
-        # finger_joints = ["left_finger_1_joint"] if arm_index == 0 else ["right_finger_1_joint"] 
-        finger_joints = ["left_joint_6"] if arm_index == 0 else ["right_joint_6"] 
-        grasps = [Grasp(
-            position=obj_position_vector,
-            rpy=(math.pi, 0, 0),
-            grasp_quality=grasp_quality,
-            approach_desired_distance=approach_desired_distance,
-            approach_min_distance=approach_min_distance,
-            retreat_desired_distance=retreat_desired_distance,
-            retreat_min_distance=retreat_min_distance,
-            finger_joints=finger_joints,
-            allowed_touch_objects=[object_name]
-        )]
-        res = self.mv_handler.approach(object_name, grasps, c_eef_step, c_jump_threshold, manual_wait)
+    def approach(self, object_name, object_msg,     
+                 approach_desired_distance=0.1,
+                 c_eef_step=0.01, c_jump_threshold=0.0):
+        # obj_position_point = object_msg.center_pose.pose.position
+        # # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
+        # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
+        # # TODO: change grsp frame_id from "base_link" to each hand frame
+        # # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
+        # # arm_index = 1
+        # arm_index = 0
+        # # if arm_index == 0:
+        #     # return False, 0
+        # # if arm_index == 1:
+        # #     return False, 1
+        # # TMP: active jointでないといけない & 実機で存在しない関節を指定するとエラー & 空だとretreatが機能しない -> アームの関節を指定
+        # # finger_joints = ["left_finger_1_joint"] if arm_index == 0 else ["right_finger_1_joint"] 
+        # finger_joints = ["left_joint_6"] if arm_index == 0 else ["right_joint_6"] 
+        # grasps = [Grasp(
+        #     position=obj_position_vector,
+        #     rpy=(math.pi, 0, 0),
+        #     grasp_quality=grasp_quality,
+        #     approach_desired_distance=approach_desired_distance,
+        #     finger_joints=finger_joints,
+        # )]
+        target_pose = object_msg.center_pose.pose
+        q = quaternion_from_euler(math.pi, 0, 0)
+        target_pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+        res = self.mv_handler.approach(object_name, target_pose, approach_desired_distance, c_eef_step, c_jump_threshold)
         return res, arm_index
     
     def pick(self, object_name, target_pose, target_angle, access_distance, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
@@ -592,7 +557,6 @@ if __name__ == "__main__":
 
     wait = rospy.get_param("wait_server", default=True)
     use_constraint = rospy.get_param("use_constraint", default=False)
-    manual_wait = rospy.get_param("manual_wait", default=False)
     used_camera = rospy.get_param("used_camera", default="left_camera")
 
     rospy.loginfo("################################################")
@@ -692,12 +656,7 @@ if __name__ == "__main__":
         arm_index = -1
         if not myrobot.is_in_peril():
             is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
-                        grasp_quality=obj.score,
                         approach_desired_distance=insert_depth * 1.0, ## 重要
-                        retreat_desired_distance=insert_depth * 2,
-                        approach_min_distance=insert_depth * 1.2,
-                        retreat_min_distance= insert_depth * 1.2,
-                        manual_wait=manual_wait
             )
         printy("is_approach_successed : {}".format(is_approach_successed))
 
@@ -742,3 +701,43 @@ if __name__ == "__main__":
 
         myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()
+
+
+
+
+# class Grasp(BaseGrasp):
+#     def __init__(self, grasp_quality, approach_desired_distance, approach_min_distance, 
+#                  retreat_desired_distance, retreat_min_distance, 
+#                  position=None, orientation=None, xyz=(0, 0, 0), rpy=(0, 0, 0), 
+#                  frame_id="base_link", finger_joints=[]):
+#         super(Grasp, self).__init__()
+#         # setting grasp-pose: this is for parent_link
+#         self.grasp_pose.header.frame_id = frame_id
+#         self.grasp_quality = grasp_quality
+#         if position is None:
+#             position = Vector3(xyz[0], xyz[1], xyz[2])
+#         if orientation is None:
+#             q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+#             orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+#         self.grasp_pose.pose.position = position
+#         self.grasp_pose.pose.orientation = orientation
+#         # setting pre-grasp approach
+#         self.pre_grasp_approach.direction.header.frame_id = frame_id
+#         self.pre_grasp_approach.direction.vector.z = -1
+#         self.pre_grasp_approach.min_distance = approach_min_distance
+#         self.pre_grasp_approach.desired_distance = approach_desired_distance
+#         # setting post-grasp retreat
+#         self.post_grasp_retreat.direction.header.frame_id = frame_id
+#         self.post_grasp_retreat.direction.vector.z = 1
+#         self.post_grasp_retreat.min_distance = retreat_min_distance
+#         self.post_grasp_retreat.desired_distance = retreat_desired_distance
+#         # setting posture of eef before grasp
+#         self.pre_grasp_posture.joint_names = finger_joints
+#         self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
+#         # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
+#         # setting posture of eef during grasp
+#         self.grasp_posture.joint_names = finger_joints
+#         self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
+#         # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
+
+
