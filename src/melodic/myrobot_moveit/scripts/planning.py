@@ -1,31 +1,27 @@
 #!/usr/bin/env python2
 # coding: UTF-8
 
-import sys
 import math
+import sys
+
+import moveit_commander as mc
 import numpy as np
 import rospy
 from actionlib import SimpleActionClient
-from std_msgs.msg import Header, Empty, Float64, Bool
-import moveit_commander as mc
-from moveit_msgs.msg import Grasp as BaseGrasp, Constraints, OrientationConstraint
-from detect.msg import VisualizeTargetAction, VisualizeTargetGoal
-from grasp_detection_client import GraspDetectionClient
-from geometry_msgs.msg import Vector3, Quaternion, PoseStamped, Pose, Twist
-from sensor_msgs.msg import Image
-from trajectory_msgs.msg import JointTrajectoryPoint
-from tf.transformations import quaternion_from_euler
-
-from octomap_handler import OctomapHandler
-from std_msgs.msg import Float64MultiArray
-
-from moveit_msgs.msg import RobotState
-from sensor_msgs.msg import JointState
-
-from modules.ros.utils import call
 from controller_manager_msgs.srv import SwitchController
-
+from detect.msg import VisualizeTargetAction, VisualizeTargetGoal, HandSpeedDirection
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion, Twist, Vector3
+from grasp_detection_client import GraspDetectionClient
 from modules.colored_print import *
+from modules.ros.utils import call
+from moveit_msgs.msg import Constraints
+from moveit_msgs.msg import Grasp as BaseGrasp
+from moveit_msgs.msg import OrientationConstraint, RobotState
+from octomap_handler import OctomapHandler
+from sensor_msgs.msg import Image, JointState
+from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header
+from tf.transformations import quaternion_from_euler
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 
 class MoveGroup(mc.MoveGroupCommander):
@@ -112,7 +108,7 @@ class MoveGroupHandler:
         self.whole_move_group.clear_pose_targets()
         return res
 
-    def approach(self, object_name, target_pose, approach_desired_distance, c_eef_step=0.001, c_jump_threshold=0.0):
+    def approach(self, target_pose, c_eef_step=0.001, c_jump_threshold=0.0):
         printb("approach planning start")
 
         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
@@ -127,9 +123,14 @@ class MoveGroupHandler:
         # pre_pose.position.y = grasp_position.y
         # pre_pose.position.z =  grasp_position.z + apploach_desired_distance
         # pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
-        pre_pose = target_pose
-        pre_pose.position.z += approach_desired_distance
-        waypoints = [pre_pose]
+
+        # pre_pose = target_pose
+        # pre_pose.position.z += approach_desired_distance
+        # waypoints = [pre_pose]
+        printr("target_pose : ")
+        printr(target_pose)
+
+        waypoints = [target_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         printc("plan_score : {}".format(plan_score))
 
@@ -145,7 +146,7 @@ class MoveGroupHandler:
             return False
 
 
-    def pick(self, object_name, target_pose, access_distance, target_pressure, arm_index,c_eef_step=0.001, c_jump_threshold=0.0):
+    def pick(self, target_pose, access_distance, target_pressure, z_direction, c_eef_step=0.001, c_jump_threshold=0.0):
         printb("pick planning start")
 
         printb("hand adjustment execution")
@@ -160,11 +161,11 @@ class MoveGroupHandler:
 
 
         # pre_pose = self.current_eef_default_pose
-        pre_pose = self.current_move_group.get_current_pose().pose
-        pre_pose.position = target_pose.position #TODO TMP
-        # pre_pose.position.z -= 0.15
-        pre_pose.orientation =  target_pose.orientation
-        plan, plan_score = self.current_move_group.compute_cartesian_path([pre_pose], c_eef_step, c_jump_threshold)
+        # pre_pose = self.current_move_group.get_current_pose().pose
+        # pre_pose.position = target_pose.position #TODO TMP
+        # pre_pose.orientation =  target_pose.orientation
+        waypoints = [target_pose]
+        plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         print("pose score", plan_score)
         if plan_score < 0.5:
             print("pick failed 1...")
@@ -210,15 +211,16 @@ class MoveGroupHandler:
         printb("down execution")
         if self.is_in_peril:
                 return False
-        lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
-        lower_speed = Float64()
-        lower_speed.data = -0.1
+        lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
+        lower_speed = HandSpeedDirection()
+        lower_speed.speed = 0.1
+        lower_speed.direction = Vector3(x = z_direction[0], y = z_direction[1] , z = z_direction[2])
         lower_speed_pub.publish(lower_speed)
 
         rospy.sleep(move_time)
 
 
-        lower_speed.data = 0
+        lower_speed.speed = 0
         lower_speed_pub.publish(lower_speed)
 
         rospy.sleep(move_time)
@@ -235,7 +237,7 @@ class MoveGroupHandler:
         printb("up execution")
         if self.is_in_peril:
                 return False
-        lower_speed.data = 0.1
+        lower_speed.speed = -0.1
         lower_speed_pub.publish(lower_speed)
 
         rospy.sleep(move_time)
@@ -243,7 +245,7 @@ class MoveGroupHandler:
         printb("up stop execution")
         if self.is_in_peril:
                 return False
-        lower_speed.data = 0
+        lower_speed.speed = 0
         lower_speed_pub.publish(lower_speed)
 
         rospy.sleep(move_time + 0.05)
@@ -334,6 +336,37 @@ class PlanningSceneHandler(mc.PlanningSceneInterface):
 
     def update_octomap(self):
         self.oh.update()
+
+
+class ContactOrientationController:
+    def __init__(self):
+        self.angle = 10
+        self.contact_angles = {
+            0 : [np.radians(0), np.radians(0), math.pi],
+            1 : [np.radians(-30), np.radians(0), math.pi + np.radians(-self.angle)], 
+            2 : [np.radians(0), np.radians(self.angle), math.pi],
+            3 : [np.radians(-15), np.radians(self.angle), math.pi + np.radians(-self.angle)],
+            4 : [np.radians(30), np.radians(0), math.pi + np.radians(self.angle)],
+            6 : [np.radians(15), np.radians(self.angle), math.pi + np.radians(self.angle)],
+            8 : [np.radians(60), np.radians(-self.angle), math.pi],
+            9 : [np.radians(-45), np.radians(-self.angle), math.pi + np.radians(-self.angle)],
+            12 : [np.radians(45), np.radians(-self.angle), math.pi + np.radians(self.angle)]
+        }
+        self.z_direction = {}
+        for k, v in self.contact_angles.items():
+            self.z_direction[k] = self.compute_z_direction(v[2], v[1])
+
+    def compute_z_direction(self, xt, yt):
+        P = np.array([[1, 0, 0],
+                      [0, np.cos(xt), -np.sin(xt)],
+                      [0, np.sin(xt), np.cos(xt)]])
+        Q = np.array([[np.cos(yt), 0, np.sin(yt)],
+                      [0, 1, 0],
+                      [-np.sin(yt), 0, np.cos(yt)]])
+
+        z = np.array([0, 0, 1])
+        return np.dot(P, np.dot(Q, z))
+
 
 
 class Myrobot:
@@ -445,16 +478,13 @@ class Myrobot:
         res =  self.mv_handler.execute(plan, wait)
         return res
 
-    def approach(self, object_name, object_msg,     
-                 approach_desired_distance=0.1,
-                 c_eef_step=0.01, c_jump_threshold=0.0):
+    def approach(self, object_msg, c_eef_step=0.01, c_jump_threshold=0.0):
         # obj_position_point = object_msg.center_pose.pose.position
         # # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
         # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
         # # TODO: change grsp frame_id from "base_link" to each hand frame
         # # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
         # # arm_index = 1
-        # arm_index = 0
         # # if arm_index == 0:
         #     # return False, 0
         # # if arm_index == 1:
@@ -469,28 +499,56 @@ class Myrobot:
         #     approach_desired_distance=approach_desired_distance,
         #     finger_joints=finger_joints,
         # )]
+
+        arm_index = 1
+        approach_desired_distance = object_msg.length_to_center
+        contact = object_msg.contact
+
+        coc = ContactOrientationController()
+        
         target_pose = object_msg.center_pose.pose
-        q = quaternion_from_euler(math.pi, 0, 0)
+        # 位置に関して
+        vec = coc.z_direction[contact] * approach_desired_distance * -1
+        target_pose.position.x += vec[0]
+        target_pose.position.y += vec[1]
+        target_pose.position.z += vec[2]
+        # 姿勢に関して
+        rpy = coc.contact_angles[contact]
+        q = quaternion_from_euler(rpy[0], rpy[1], rpy[2], axes="szyx")
         target_pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
-        res = self.mv_handler.approach(object_name, target_pose, approach_desired_distance, c_eef_step, c_jump_threshold)
+        res = self.mv_handler.approach(target_pose, c_eef_step, c_jump_threshold)
         return res, arm_index
     
-    def pick(self, object_name, target_pose, target_angle, access_distance, target_pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0):
+    def pick(self, res_msg, contact, c_eef_step=0.01, c_jump_threshold=0.0):
         # obj_position_point = target_pose.position
 
         # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z)
+        res_pose = res_msg.pose
+        res_angle = res_msg.angle
+        access_distance = res_msg.distance
+        target_pressure = res_msg.pressure
 
-        rpy=(math.pi, 0, np.radians(target_angle))
+        rpy=(math.pi, 0, np.radians(res_angle))
         q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
         orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-        pose = Pose(position=target_pose.position, orientation=orientation)
+
         
+        coc = ContactOrientationController()
+        if contact != 0:
+            rpy = coc.contact_angles[contact]
+            q = quaternion_from_euler(rpy[0], rpy[1], rpy[2], axes="szyx")
+            orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+
+        target_pose = Pose(position=res_pose.position, orientation=orientation)
+
+
         print("in PICK")
         print(target_pose.position)
 
 
-        res = self.mv_handler.pick(object_name, pose, access_distance, target_pressure, arm_index, c_eef_step, c_jump_threshold)
+        res = self.mv_handler.pick(target_pose, access_distance, target_pressure, coc.z_direction[contact], c_eef_step, c_jump_threshold)
         return res
         
 
@@ -598,9 +656,10 @@ if __name__ == "__main__":
     startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
     empty_msg = Empty()
     startup_pub.publish(empty_msg)
-    lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
-    lower_speed = Float64()
-    lower_speed.data = 0
+    lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
+    lower_speed = HandSpeedDirection()
+    lower_speed.speed = 0
+    lower_speed.direction = Vector3()
     lower_speed_pub.publish(lower_speed)
     hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
     hand_enable_msg = Bool()
@@ -655,16 +714,15 @@ if __name__ == "__main__":
         is_approach_successd = False
         arm_index = -1
         if not myrobot.is_in_peril():
-            is_approach_successed, arm_index = myrobot.approach(obj_name, obj,
-                        approach_desired_distance=insert_depth * 1.0, ## 重要
-            )
+            is_approach_successed, arm_index = myrobot.approach(obj)
         printy("is_approach_successed : {}".format(is_approach_successed))
 
         is_pick_successed = False
         if is_approach_successed and not myrobot.is_in_peril():
             res = myrobot.calcurate_insertion()
             if res.success and not myrobot.is_in_peril():
-                is_pick_successed = myrobot.pick(obj_name, res.pose, res.angle, res.distance, res.pressure, arm_index, c_eef_step=0.01, c_jump_threshold=0.0)
+                # is_pick_successed = myrobot.pick(res.pose, res.angle, res.distance, res.pressure)
+                is_pick_successed = myrobot.pick(res, obj.contact)
             else:
                 printr("no good cabbage...")
         printy("is_pick_successed : {}".format(is_pick_successed))

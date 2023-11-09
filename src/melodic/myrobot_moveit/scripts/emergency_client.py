@@ -4,8 +4,9 @@ import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, PointCloud2
 from actionlib import SimpleActionClient
-from detect.msg import GraspDetectionAction, GraspDetectionGoal, CalcurateInsertionAction, CalcurateInsertionGoal
+from detect.msg import GraspDetectionAction, GraspDetectionGoal, CalcurateInsertionAction, CalcurateInsertionGoal, HandSpeedDirection
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
+from geometry_msgs.msg import Vector3
 
 import numpy as np
 from std_msgs.msg import Bool, Int64MultiArray, Float64, Empty, Float64MultiArray
@@ -24,7 +25,7 @@ class EmergencyClient:
         self.pub = rospy.Publisher("/is_in_peril", Bool, queue_size=10)
         self.sub = rospy.Subscriber("/hand_emergency", Int64MultiArray, self.stop)
         self.startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
-        self.lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', Float64, queue_size=1)
+        self.lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
         self.hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
 
         self.in_process = False
@@ -64,8 +65,9 @@ class EmergencyClient:
                 strictness=1, start_asap=True, timeout=5.0)
 
             move_time = 1.5 
-            lower_speed = Float64()
-            lower_speed.data = 0.1
+            lower_speed = HandSpeedDirection()
+            lower_speed.speed = -0.1
+            lower_speed.direction = Vector3(x = 0.0, y = 0.0, z = -1.0)
             self.lower_speed_pub.publish(lower_speed)
 
             rospy.sleep(move_time)
