@@ -49,6 +49,9 @@
         <group name="left_arm" />
         <group name="right_arm" />
     </group>
+    <group name="back_only">
+        <joint name="joint_back" />
+    </group>
     <group name="base">
         <joint name="joint_back" />
         <joint name="joint_body" />
