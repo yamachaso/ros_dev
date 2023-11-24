@@ -53,6 +53,8 @@ class MoveGroupHandler:
         self.is_in_peril = False
         self.sub = rospy.Subscriber("/is_in_peril", Bool, self.set_peril)
 
+        self.mv_right_arm = MoveGroup("back_and_right_arm")
+
     def set_peril(self, msg):
         self.is_in_peril = msg.data
 
@@ -228,7 +230,7 @@ class MoveGroupHandler:
         printb("grab execution")
         if self.is_in_peril:
                 return False
-        hand_msg.data = [0.0, 1.2]
+        hand_msg.data = [0.0, 1.6]
         hand_pub.publish(hand_msg)
         printb("grabed")
 
@@ -268,29 +270,68 @@ class MoveGroupHandler:
 
 
     def place(self, object_name, target_pose, c_eef_step=0.001, c_jump_threshold=0.0):
-        place_pose = self.current_move_group.get_current_pose().pose
-        place_pose.position = target_pose.position #TODO TMP
+#         place_pose = self.current_move_group.get_current_pose().pose
+#         place_pose.position = target_pose.position #TODO TMP
+# 
+#         place_pose.position.z += 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         printb("pre place execution")
+#         if self.is_in_peril:
+#                 return False
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         place_pose.position.z -= 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         if self.is_in_peril:
+#                 return False
+#         printb("place execution")
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         if self.is_in_peril:
+#                 return False
+#         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+#         hand_msg = Float64MultiArray()
+#         hand_msg.data = [0, 0]
+#         hand_pub.publish(hand_msg)
+# 
+#         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+#         hand_enable_msg = Bool()
+#         hand_enable_msg.data = False 
+#         hand_enable_pub.publish(hand_enable_msg)
+# 
+#         rospy.sleep(2)
+# 
+# 
+#         place_pose.position.z += 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         printb("post place execution")
+#         if self.is_in_peril:
+#                 return False
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         return True
 
-        place_pose.position.z += 0.1
-        self.current_move_group.set_pose_target(place_pose)
-        plan = self.current_move_group.plan()
-        if not plan.joint_trajectory.points:
-            rospy.logerr("No motion plan found")
-            return False
+
+        target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_place")
+        plan = self.mv_right_arm.plan(target_joint_dict)
+
+
+
         printb("pre place execution")
         if self.is_in_peril:
                 return False
-        self.current_move_group.execute(plan, wait=True)
-
-        place_pose.position.z -= 0.1
-        self.current_move_group.set_pose_target(place_pose)
-        plan = self.current_move_group.plan()
-        if not plan.joint_trajectory.points:
-            rospy.logerr("No motion plan found")
-            return False
-        if self.is_in_peril:
-                return False
-        printb("place execution")
         self.current_move_group.execute(plan, wait=True)
 
         if self.is_in_peril:
@@ -308,19 +349,14 @@ class MoveGroupHandler:
         rospy.sleep(2)
 
 
-        place_pose.position.z += 0.1
-        self.current_move_group.set_pose_target(place_pose)
-        plan = self.current_move_group.plan()
-        if not plan.joint_trajectory.points:
-            rospy.logerr("No motion plan found")
-            return False
+        target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_start")
+        plan = self.mv_right_arm.plan(target_joint_dict)
         printb("post place execution")
         if self.is_in_peril:
                 return False
         self.current_move_group.execute(plan, wait=True)
 
         return True
-
 
     def get_current_name(self):
         return self.current_move_group.get_name()
@@ -370,7 +406,7 @@ class ContactOrientationController:
 
 
 class Myrobot:
-    def __init__(self, fps, image_topic, depth_topic, points_topic, raw_point_topics, wait = True, use_constraint = False, add_ground = True, used_camera = "left_camera"):
+    def __init__(self, fps, image_topic, depth_topic, points_topic, raw_point_topics, wait = True, use_constraint = False, add_ground = False, used_camera = "left_camera"):
         mc.roscpp_initialize(sys.argv)
 
         self.robot = mc.RobotCommander()
@@ -383,10 +419,10 @@ class Myrobot:
         box_pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
         support_surface_name = "table"
         self.scene_handler.add_box(support_surface_name, box_pose, size=(0.5, 0.5, 0.4))
-        if add_ground:
-            plane_pose = PoseStamped()
-            plane_pose.header.frame_id = "world"
-            self.scene_handler.add_plane("ground plane", plane_pose)    
+#         if add_ground:
+#             plane_pose = PoseStamped()
+#             plane_pose.header.frame_id = "world"
+#             self.scene_handler.add_plane("ground plane", plane_pose)    
 
         # constraints
         if use_constraint:
@@ -411,6 +447,10 @@ class Myrobot:
         # whole group
         # TODO: constraintあてる
         mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
+
+        #############
+        mv_back_and_arm = MoveGroup("back_and_right_arm", support_surface_name=support_surface_name, planning_time=10)
+        #############
  
         printg("movegroup load : SUCCESS")
 

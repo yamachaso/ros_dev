@@ -35,7 +35,8 @@ class EmergencyClient:
         hands_value = np.array(msg.data) # int64
         if self.in_process:
             return
-        if hands_value[0] == 1 or hands_value[1] == 1:
+        if hands_value[1] == 1:
+        # if hands_value[0] == 1 or hands_value[1] == 1:
             self.in_process = True
             printr("Emergency called!!")
             peril_msg = Bool()
@@ -64,7 +65,7 @@ class EmergencyClient:
                 stop_controllers=[""],
                 strictness=1, start_asap=True, timeout=5.0)
 
-            move_time = 1.5 
+            move_time = 1
             lower_speed = HandSpeedDirection()
             lower_speed.speed = -0.1
             lower_speed.direction = Vector3(x = 0.0, y = 0.0, z = -1.0)
@@ -72,7 +73,7 @@ class EmergencyClient:
 
             rospy.sleep(move_time)
 
-            lower_speed.data = 0
+            lower_speed.speed = 0
             self.lower_speed_pub.publish(lower_speed)
 
             rospy.sleep(move_time)
@@ -88,8 +89,8 @@ class EmergencyClient:
             # rospy.sleep(1)
 
 
-            mv_right_arm = MoveGroup("right_arm")
-            target_name = "right_arm_start"
+            mv_right_arm = MoveGroup("back_and_right_arm")
+            target_name = "back_and_right_arm_start"
             target_joint_dict = mv_right_arm.get_named_target_values(target_name)
             plan = mv_right_arm.plan(target_joint_dict)
             mv_right_arm.execute(plan, wait=True)
