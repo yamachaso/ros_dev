@@ -270,6 +270,59 @@ class MoveGroupHandler:
 
 
     def place(self, object_name, target_pose, c_eef_step=0.001, c_jump_threshold=0.0):
+#         place_pose = self.current_move_group.get_current_pose().pose
+#         place_pose.position = target_pose.position #TODO TMP
+# 
+#         place_pose.position.z += 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         printb("pre place execution")
+#         if self.is_in_peril:
+#                 return False
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         place_pose.position.z -= 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         if self.is_in_peril:
+#                 return False
+#         printb("place execution")
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         if self.is_in_peril:
+#                 return False
+#         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+#         hand_msg = Float64MultiArray()
+#         hand_msg.data = [0, 0]
+#         hand_pub.publish(hand_msg)
+# 
+#         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
+#         hand_enable_msg = Bool()
+#         hand_enable_msg.data = False 
+#         hand_enable_pub.publish(hand_enable_msg)
+# 
+#         rospy.sleep(2)
+# 
+# 
+#         place_pose.position.z += 0.1
+#         self.current_move_group.set_pose_target(place_pose)
+#         plan = self.current_move_group.plan()
+#         if not plan.joint_trajectory.points:
+#             rospy.logerr("No motion plan found")
+#             return False
+#         printb("post place execution")
+#         if self.is_in_peril:
+#                 return False
+#         self.current_move_group.execute(plan, wait=True)
+# 
+#         return True
+
 
         target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_place")
         plan = self.mv_right_arm.plan(target_joint_dict)
@@ -466,6 +519,27 @@ class Myrobot:
         return res
 
     def approach(self, object_msg, c_eef_step=0.01, c_jump_threshold=0.0):
+        # obj_position_point = object_msg.center_pose.pose.position
+        # # z = max(obj_position_point.z - object_msg.length_to_center / 2, 0.01)
+        # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z) # キャベツの表面の位置
+        # # TODO: change grsp frame_id from "base_link" to each hand frame
+        # # arm_index = self.select_arm(obj_position_vector.y) # TODO: 一時的にコメントアウト
+        # # arm_index = 1
+        # # if arm_index == 0:
+        #     # return False, 0
+        # # if arm_index == 1:
+        # #     return False, 1
+        # # TMP: active jointでないといけない & 実機で存在しない関節を指定するとエラー & 空だとretreatが機能しない -> アームの関節を指定
+        # # finger_joints = ["left_finger_1_joint"] if arm_index == 0 else ["right_finger_1_joint"] 
+        # finger_joints = ["left_joint_6"] if arm_index == 0 else ["right_joint_6"] 
+        # grasps = [Grasp(
+        #     position=obj_position_vector,
+        #     rpy=(math.pi, 0, 0),
+        #     grasp_quality=grasp_quality,
+        #     approach_desired_distance=approach_desired_distance,
+        #     finger_joints=finger_joints,
+        # )]
+
         arm_index = 1
         approach_desired_distance = object_msg.length_to_center
         contact = object_msg.contact
@@ -725,3 +799,43 @@ if __name__ == "__main__":
 
         myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()
+
+
+
+
+# class Grasp(BaseGrasp):
+#     def __init__(self, grasp_quality, approach_desired_distance, approach_min_distance, 
+#                  retreat_desired_distance, retreat_min_distance, 
+#                  position=None, orientation=None, xyz=(0, 0, 0), rpy=(0, 0, 0), 
+#                  frame_id="base_link", finger_joints=[]):
+#         super(Grasp, self).__init__()
+#         # setting grasp-pose: this is for parent_link
+#         self.grasp_pose.header.frame_id = frame_id
+#         self.grasp_quality = grasp_quality
+#         if position is None:
+#             position = Vector3(xyz[0], xyz[1], xyz[2])
+#         if orientation is None:
+#             q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+#             orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+#         self.grasp_pose.pose.position = position
+#         self.grasp_pose.pose.orientation = orientation
+#         # setting pre-grasp approach
+#         self.pre_grasp_approach.direction.header.frame_id = frame_id
+#         self.pre_grasp_approach.direction.vector.z = -1
+#         self.pre_grasp_approach.min_distance = approach_min_distance
+#         self.pre_grasp_approach.desired_distance = approach_desired_distance
+#         # setting post-grasp retreat
+#         self.post_grasp_retreat.direction.header.frame_id = frame_id
+#         self.post_grasp_retreat.direction.vector.z = 1
+#         self.post_grasp_retreat.min_distance = retreat_min_distance
+#         self.post_grasp_retreat.desired_distance = retreat_desired_distance
+#         # setting posture of eef before grasp
+#         self.pre_grasp_posture.joint_names = finger_joints
+#         self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
+#         # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
+#         # setting posture of eef during grasp
+#         self.grasp_posture.joint_names = finger_joints
+#         self.pre_grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Duration(2.0))]
+#         # self.grasp_posture.points = [JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(0)), JointTrajectoryPoint(positions=[0.0], time_from_start=rospy.Time(10))]
+
+
