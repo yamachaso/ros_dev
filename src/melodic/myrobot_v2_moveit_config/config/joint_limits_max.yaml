@@ -1,0 +1,94 @@
+# joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
+# Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
+# Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
+joint_limits:
+  left_joint_1:
+    has_velocity_limits: true
+    max_velocity: 2.9845130209103
+    has_acceleration_limits: true
+    max_acceleration: 10.8341138784623
+  left_joint_2:
+    has_velocity_limits: true
+    max_velocity: 2.73580360250111
+    has_acceleration_limits: true
+    max_acceleration: 9.21882910903405
+  left_joint_3:
+    has_velocity_limits: true
+    max_velocity: 3.28296432300133
+    has_acceleration_limits: true
+    max_acceleration: 10.4220852752977
+  left_joint_4:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 11.2448160313953
+  left_joint_5:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 10.5834147847058
+  left_joint_6:
+    has_velocity_limits: true
+    max_velocity: 6.56592864600267
+    has_acceleration_limits: true
+    max_acceleration: 13.3349699837062
+  left_joint_sholder:
+    has_velocity_limits: true
+    max_velocity: 0.59259164092963
+    has_acceleration_limits: true
+    max_acceleration: 2.96295820464817
+  joint_body:
+    has_velocity_limits: true
+    max_velocity: 0.19
+    has_acceleration_limits: true
+    max_acceleration: 0.95
+  # left_finger_1_joint:
+  #   has_velocity_limits: true
+  #   max_velocity: 0.5
+  #   has_acceleration_limits: false
+  #   max_acceleration: 0
+  right_joint_1:
+    has_velocity_limits: true
+    max_velocity: 2.9845130209103
+    has_acceleration_limits: true
+    max_acceleration: 10.8341138784623
+  right_joint_2:
+    has_velocity_limits: true
+    max_velocity: 2.73580360250111
+    has_acceleration_limits: true
+    max_acceleration: 9.21882910903405
+  right_joint_3:
+    has_velocity_limits: true
+    max_velocity: 3.28296432300133
+    has_acceleration_limits: true
+    max_acceleration: 10.4220852752977
+  right_joint_4:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 11.2448160313953
+  right_joint_5:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 10.5834147847058
+  right_joint_6:
+    has_velocity_limits: true
+    max_velocity: 6.56592864600267
+    has_acceleration_limits: true
+    max_acceleration: 13.3349699837062
+  joint_back:
+    has_velocity_limits: true
+    max_velocity: 1.19380520836412
+    has_acceleration_limits: true
+    max_acceleration: 5.96902604182060
+  right_joint_sholder:
+    has_velocity_limits: true
+    max_velocity: 0.59259164092963
+    has_acceleration_limits: true
+    max_acceleration: 2.96295820464817
+  # right_finger_1_joint:
+  #   has_velocity_limits: true
+  #   max_velocity: 0.5
+  #   has_acceleration_limits: false
+  #   max_acceleration: 0

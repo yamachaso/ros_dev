@@ -1,0 +1,32 @@
+# DENSOのROS_ToolsのAcquireVelAccにより出力されたデータ
+joint_limits:
+  joint_1:
+    has_velocity_limits: true
+    max_velocity: 2.9845130209103
+    has_acceleration_limits: true
+    max_acceleration: 10.8341138784623
+  joint_2:
+    has_velocity_limits: true
+    max_velocity: 2.73580360250111
+    has_acceleration_limits: true
+    max_acceleration: 9.21882910903405
+  joint_3:
+    has_velocity_limits: true
+    max_velocity: 3.28296432300133
+    has_acceleration_limits: true
+    max_acceleration: 10.4220852752977
+  joint_4:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 11.2448160313953
+  joint_5:
+    has_velocity_limits: true
+    max_velocity: 4.10370540375167
+    has_acceleration_limits: true
+    max_acceleration: 10.5834147847058
+  joint_6:
+    has_velocity_limits: true
+    max_velocity: 6.56592864600267
+    has_acceleration_limits: true
+    max_acceleration: 13.3349699837062
