@@ -7,11 +7,13 @@ import sys
 import moveit_commander as mc
 import numpy as np
 import rospy
+import tf
 from actionlib import SimpleActionClient
 from controller_manager_msgs.srv import SwitchController
 from detect.msg import VisualizeTargetAction, VisualizeTargetGoal, HandSpeedDirection
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion, Twist, Vector3
 from grasp_detection_client import GraspDetectionClient
+from container_position_client import ContainerPositionClient
 from modules.colored_print import *
 from modules.ros.utils import call
 from moveit_msgs.msg import Constraints
@@ -25,13 +27,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 
 class MoveGroup(mc.MoveGroupCommander):
-    def __init__(self, name, parent=None, constraint=Constraints(), support_surface_name="", planning_time=5):
+    def __init__(self, name, planning_time=5):
         super(MoveGroup, self).__init__(name)
-        self.constraint = constraint
-        self.parent = parent
-        # self.next = mc.MoveGroupCommander(next_name)
-        self.set_path_constraints(constraint)
-        self.set_support_surface_name(support_surface_name)
         self.set_planning_time(planning_time)
 
     # ジョイント名をキー, 関節角度値を値とした辞書
@@ -357,46 +354,47 @@ class Myrobot:
         mc.roscpp_initialize(sys.argv)
 
         self.robot = mc.RobotCommander()
-        self.scene_handler = PlanningSceneHandler(raw_point_topics)
+        self.scene_handler = mc.PlanningSceneInterface(synchronous=True)
+        # self.scene_handler = PlanningSceneHandler(raw_point_topics)
 
-        box_pose = PoseStamped()
-        box_pose.header.frame_id = "world"
-        box_pose.pose.position =Vector3(0, -1, 0.2)
-        q = quaternion_from_euler(0.0, 0.0, 0.0)
-        box_pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-        support_surface_name = "table"
-        self.scene_handler.add_box(support_surface_name, box_pose, size=(0.5, 0.5, 0.4))
+        # box_pose = PoseStamped()
+        # box_pose.header.frame_id = "world"
+        # box_pose.pose.position =Vector3(0, -1, 0.2)
+        # q = quaternion_from_euler(0.0, 0.0, 0.0)
+        # box_pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        # support_surface_name = "table"
+        # self.scene_handler.add_box(support_surface_name, box_pose, size=(0.5, 0.5, 0.4))
 #         if add_ground:
 #             plane_pose = PoseStamped()
 #             plane_pose.header.frame_id = "world"
 #             self.scene_handler.add_plane("ground plane", plane_pose)    
 
         # constraints
-        if use_constraint:
-            constraint_rpy = (0, math.pi, 0) # TODO: compute z from finger property (now 45 for 4 fingers)
-            constraint_xyz_tolerance = (0.05, 0.05, 3.6) # TODO: update this value
-            # constraint_xyz_tolerance = (0.08726, 0.08726, 6.28318) # TODO: update this value
-            left_hand_constraint = self._create_constraint("left_hand_constraint", link_name="left_soft_hand_base_link", 
-                                                        rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
-            right_hand_constraint = self._create_constraint("right_hand_constraint", link_name="right_soft_hand_base_link", 
-                                                        rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
-        else:
-            left_hand_constraint = Constraints()
-            right_hand_constraint = Constraints()
+        # if use_constraint:
+        #     constraint_rpy = (0, math.pi, 0) # TODO: compute z from finger property (now 45 for 4 fingers)
+        #     constraint_xyz_tolerance = (0.05, 0.05, 3.6) # TODO: update this value
+        #     # constraint_xyz_tolerance = (0.08726, 0.08726, 6.28318) # TODO: update this value
+        #     left_hand_constraint = self._create_constraint("left_hand_constraint", link_name="left_soft_hand_base_link", 
+        #                                                 rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
+        #     right_hand_constraint = self._create_constraint("right_hand_constraint", link_name="right_soft_hand_base_link", 
+        #                                                 rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
+        # else:
+        # left_hand_constraint = Constraints()
+        # right_hand_constraint = Constraints()
 
-        mv_base_to_left_arm = MoveGroup("base_and_left_arm", constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        mv_body_to_left_arm = MoveGroup("body_and_left_arm", parent=mv_base_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        mv_left_arm = MoveGroup("left_arm", parent=mv_body_to_left_arm, constraint=left_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
+        mv_base_to_left_arm = MoveGroup("base_and_left_arm", planning_time=10)
+        mv_body_to_left_arm = MoveGroup("body_and_left_arm", planning_time=10)
+        mv_left_arm = MoveGroup("left_arm", planning_time=10)
         # right groups
-        mv_base_to_right_arm = MoveGroup("base_and_right_arm", constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        mv_body_to_right_arm = MoveGroup("body_and_right_arm", parent=mv_base_to_right_arm, constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
-        mv_right_arm = MoveGroup("right_arm", parent=mv_body_to_right_arm, constraint=right_hand_constraint, support_surface_name=support_surface_name, planning_time=10)
+        mv_base_to_right_arm = MoveGroup("base_and_right_arm", planning_time=10)
+        mv_body_to_right_arm = MoveGroup("body_and_right_arm", planning_time=10)
+        mv_right_arm = MoveGroup("right_arm", planning_time=10)
         # whole group
         # TODO: constraintあてる
-        mv_base_to_arms = MoveGroup("base_and_arms", support_surface_name=support_surface_name, planning_time=10)
+        mv_base_to_arms = MoveGroup("base_and_arms", planning_time=10)
 
         #############
-        mv_back_and_arm = MoveGroup("back_and_right_arm", support_surface_name=support_surface_name, planning_time=10)
+        mv_back_and_arm = MoveGroup("back_and_right_arm", planning_time=10)
         #############
  
         printg("movegroup load : SUCCESS")
@@ -416,6 +414,8 @@ class Myrobot:
             points_topic=points_topic,
             wait=wait
         )
+
+        self.cp_cli = ContainerPositionClient()
 
     def is_in_peril(self):
         return self.mv_handler.is_in_peril
@@ -448,15 +448,15 @@ class Myrobot:
         self.mv_handler.initialize_whole_pose()
         self.mv_handler.reset_move_group()
 
-    def get_around_octomap(self, values=[-30, 30, 0], sleep_time=0, is_degree=False, should_reset=True):
-        if should_reset:
-            self.scene_handler.clear_octomap()
-        for value in values:
-            plan = self.plan(joint_back=value, is_degree=is_degree)
-            self.execute(plan, wait=True)
-            rospy.sleep(sleep_time)
-            self.scene_handler.update_octomap()
-            rospy.sleep(sleep_time)
+    # def get_around_octomap(self, values=[-30, 30, 0], sleep_time=0, is_degree=False, should_reset=True):
+    #     if should_reset:
+    #         self.scene_handler.clear_octomap()
+    #     for value in values:
+    #         plan = self.plan(joint_back=value, is_degree=is_degree)
+    #         self.execute(plan, wait=True)
+    #         rospy.sleep(sleep_time)
+    #         self.scene_handler.update_octomap()
+    #         rospy.sleep(sleep_time)
 
     def plan(self, joints={}, is_degree=False, **kwargs):
         return self.mv_handler.plan(joints, is_degree, **kwargs)
@@ -545,6 +545,28 @@ class Myrobot:
 
         self.mv_handler.set_current_move_group(new_move_group, new_eef_default_pose)
         return arm_index
+    
+    def set_container(self):
+        # listener = tf.TransformListener()
+        # (trans, rot) = listener.lookupTransform('/base_link', '/container_base', rospy.Time(0))
+
+        res = self.cp_cli.get()
+
+        container_pose = PoseStamped()
+        container_pose.header.frame_id = "base_link"
+
+        q = quaternion_from_euler(0.0, 0.0, -math.pi / 2)
+        container_pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        container_pose.pose.position.x = res.point.x
+        container_pose.pose.position.y = res.point.y
+        container_pose.pose.position.z = res.point.z
+        container_name = 'container'
+
+        container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/close.dae'
+        self.scene_handler.add_mesh(container_name, container_pose, container_filename, size=(0.001, 0.001, 0.001))
+
+    def delete_container(self):
+         self.scene_handler.remove_world_object('container')
 
     def info(self):
         print("-" * 30)
@@ -640,6 +662,9 @@ if __name__ == "__main__":
             rospy.sleep(1)
             continue
         rospy.logerr("loop start")
+
+        myrobot.set_container()
+
         rospy.sleep(0.1)
         # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
         # object = myrobot.detect()
@@ -669,7 +694,7 @@ if __name__ == "__main__":
         # obj.length_to_center = obj.length_to_center * 1.3
         insert_depth = obj.length_to_center
         # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
-        myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
+        # myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
         ### myrobot.scene_handler.update_octomap()
 
         printy("contact : {}".format(obj.contact))
@@ -705,7 +730,7 @@ if __name__ == "__main__":
 
 
         link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
-        myrobot.scene_handler.remove_attached_object(link) 
+        # myrobot.scene_handler.remove_attached_object(link) 
 
 
         if myrobot.is_in_peril():
@@ -723,5 +748,6 @@ if __name__ == "__main__":
 
         printg("initialized!!")
 
-        myrobot.scene_handler.remove_world_object(obj_name)
+        myrobot.delete_container()
+        # myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()
