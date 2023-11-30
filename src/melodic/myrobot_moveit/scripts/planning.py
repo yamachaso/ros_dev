@@ -24,7 +24,7 @@ from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header
 from tf.transformations import quaternion_from_euler
 from trajectory_msgs.msg import JointTrajectoryPoint
-
+from exclusion_list_client import ExclusionListClient
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, planning_time=5):
@@ -417,6 +417,8 @@ class Myrobot:
 
         self.cp_cli = ContainerPositionClient()
 
+        self.el_cli = ExclusionListClient()
+
     def is_in_peril(self):
         return self.mv_handler.is_in_peril
     
@@ -682,11 +684,12 @@ if __name__ == "__main__":
         obj = myrobot.detect()
         obj_name = "object_{}".format(len(registered_objects))
         # TMP: ズレの補正
-        obj.center_pose.pose.position.y -= 0.01
+        # obj.center_pose.pose.position.y -= 0.01
 
         # visualize target
         # vis_cli.send_goal(VisualizeTargetGoal(obj.index))
-        
+        obj_center = obj.center.uv
+        printg("obj_cetner : {}".format(obj_center)) 
         # add object
         obj_pose = obj.center_pose
         # obj_pose.pose.position.z -= obj.length_to_center / 2
@@ -702,7 +705,7 @@ if __name__ == "__main__":
         # pick
         print("try to pick | score: {}".format(obj.score))
         # TODO: pull up arm index computation from pick
-        is_approach_successd = False
+        is_approach_successed = False
         arm_index = -1
         if not myrobot.is_in_peril():
             is_approach_successed, arm_index = myrobot.approach(obj)
@@ -745,6 +748,11 @@ if __name__ == "__main__":
         hand_msg = Float64MultiArray()
         hand_msg.data = [0.0, 0.0]
         hand_pub.publish(hand_msg)
+
+
+        if not is_approach_successed or not is_pick_successed:
+            print(obj_center)
+            myrobot.el_cli.add(obj_center[0], obj_center[1])
 
         printg("initialized!!")
 
