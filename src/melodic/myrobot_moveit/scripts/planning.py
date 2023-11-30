@@ -700,6 +700,13 @@ if __name__ == "__main__":
         # myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
         ### myrobot.scene_handler.update_octomap()
 
+        is_detect_successed = False
+        printy(obj_pose.pose.position.y)
+        
+        # 右アームは左半分位あるキャベツを無視する
+        if obj_pose.pose.position.y < 0:
+            is_detect_successed = True 
+
         printy("contact : {}".format(obj.contact))
 
         # pick
@@ -707,7 +714,7 @@ if __name__ == "__main__":
         # TODO: pull up arm index computation from pick
         is_approach_successed = False
         arm_index = -1
-        if not myrobot.is_in_peril():
+        if is_detect_successed and not myrobot.is_in_peril():
             is_approach_successed, arm_index = myrobot.approach(obj)
         printy("is_approach_successed : {}".format(is_approach_successed))
 
@@ -722,6 +729,8 @@ if __name__ == "__main__":
         printy("is_pick_successed : {}".format(is_pick_successed))
             
         print("pick result : {}".format(is_approach_successed))
+
+        myrobot.delete_container()
 
         is_place_successed = False
         if is_pick_successed and not myrobot.is_in_peril():
@@ -756,6 +765,5 @@ if __name__ == "__main__":
 
         printg("initialized!!")
 
-        myrobot.delete_container()
         # myrobot.scene_handler.remove_world_object(obj_name)
         ### myrobot.scene_handler.update_octomap()
