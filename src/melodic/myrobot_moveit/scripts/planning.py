@@ -19,7 +19,6 @@ from modules.ros.utils import call
 from moveit_msgs.msg import Constraints
 from moveit_msgs.msg import Grasp as BaseGrasp
 from moveit_msgs.msg import OrientationConstraint, RobotState
-from octomap_handler import OctomapHandler
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header
 from tf.transformations import quaternion_from_euler
@@ -305,17 +304,6 @@ class MoveGroupHandler:
     def get_current_name(self):
         return self.current_move_group.get_name()
 
-class PlanningSceneHandler(mc.PlanningSceneInterface):
-    def __init__(self, raw_point_topics):
-        super(PlanningSceneHandler, self).__init__(synchronous=True)
-
-        self.oh = OctomapHandler(raw_point_topics)
-
-    def clear_octomap(self):
-        self.oh.clear()
-
-    def update_octomap(self):
-        self.oh.update()
 
 
 class ContactOrientationController:
