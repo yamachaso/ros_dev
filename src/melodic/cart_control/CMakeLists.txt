@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   transmission_interface
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -52,6 +53,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
+
+add_action_files(
+  FILES
+  CartBackandforth.action
+)
+
+#Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  actionlib_msgs
+)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES

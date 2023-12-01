@@ -6,6 +6,8 @@
 
 
     <!-- joy -> cmd_vel -> controller command  -->
+    <node name="joy_node" pkg="joy" type="joy_node" />
+    <node name="joy_twist_publisher" pkg="cart_control" type="joy_twist_publisher" />
     <node name="twist_to_controller_command" pkg="cart_control" type="twist_to_controller_command" />
 
     <group ns="/$(arg robot_name)/cart">
