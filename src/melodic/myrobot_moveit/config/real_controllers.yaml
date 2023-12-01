@@ -57,6 +57,31 @@ myrobot:
       constraints:
         goal_time: 1
         stopped_velocity_tolerance: 0
+
+    left_cartesian_motion_controller:
+        type: "position_controllers/CartesianMotionController"
+        end_effector_link: "left_soft_hand_tip"
+        robot_base_link: "body"
+        target_frame_topic: "/target_frame/left"
+
+        joints:
+          # - joint_back
+          - left_joint_sholder
+          - left_joint_1
+          - left_joint_2
+          - left_joint_3
+          - left_joint_4
+          - left_joint_5
+          - left_joint_6
+
+        pd_gains:
+            trans_x: {p: 30.0}
+            trans_y: {p: 30.0}
+            trans_z: {p: 30.0}
+            rot_x: {p: 120.0}
+            rot_y: {p: 120.0}
+            rot_z: {p: 120.0}
+
   right_arm:
     joint_state_controller:
       type: joint_state_controller/JointStateController
@@ -123,9 +148,9 @@ _controller_template: &_controller_template
   joints: []
 controller_list:
   #  コメントアウトしないとAction client not connected: myrobot/left_arm/left_arm_controller/follow_joint_trajectoryと言われる
-  # - <<: *_controller_template
-  #   name: myrobot/left_arm/left_arm_controller
-  #   joints: *left_arm_joints
+  - <<: *_controller_template
+    name: myrobot/left_arm/left_arm_controller
+    joints: *left_arm_joints
   - <<: *_controller_template
     name: myrobot/right_arm/right_arm_controller
     joints: *right_arm_joints

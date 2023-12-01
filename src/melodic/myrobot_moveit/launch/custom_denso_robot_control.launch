@@ -20,16 +20,27 @@
         </include>
         <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" />
     </group>
-
-
+    <group ns="/$(arg robot_name)/left_arm">
+        <include file="$(find myrobot_moveit)/config/left_arm_config.launch.xml" >
+            <arg name="ip_address" value="$(arg ip_address_left)" />
+        </include>
+        <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" />
+    </group>
 
     <rosparam file="$(find myrobot_moveit)/config/real_controllers.yaml" command="load" />
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/right_arm" args="--namespace=/myrobot/right_arm 
         joint_state_controller right_arm_controller 
     " />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm 
+        joint_state_controller left_arm_controller 
+    " />
+
     <!-- ref: https://x.gd/OO1r2 -->
     <node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/right_arm" args="--namespace=/myrobot/right_arm --stopped
           right_cartesian_motion_controller
       " />
- 
+    <node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm --stopped
+          left_cartesian_motion_controller
+      " />
+
 </launch>
