@@ -88,6 +88,9 @@ roslaunch myrobot_moveit_config demo_gazebo.launch // moveitとgazeboによる�
 make stop // コンテナの停止
 ```
 
+## フローチャート
+![](flowchart.drawio.svg)
+
 ## 参考情報
 ### VSCodeのおすすめ拡張機能
 * RemoteContainer: コンテナ内の環境を使って開発ができる。
