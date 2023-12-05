@@ -35,6 +35,10 @@ def main():
     if plan_score < 0.5:
         print("pick failed 1...")
         return False
+
+    print(plan)
+
+    return True
     
     move_group.execute(plan, wait=True)
 

@@ -24,7 +24,6 @@ class EmergencyClient:
     def __init__(self):
         self.pub = rospy.Publisher("/is_in_peril", Bool, queue_size=10)
         self.sub = rospy.Subscriber("/hand_emergency", Int64MultiArray, self.stop)
-        self.startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
         self.lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
         self.hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
 
@@ -35,8 +34,14 @@ class EmergencyClient:
         hands_value = np.array(msg.data) # int64
         if self.in_process:
             return
-        if hands_value[1] == 1:
-        # if hands_value[0] == 1 or hands_value[1] == 1:
+        if hands_value[0] == 1 or hands_value[1] == 1:
+            if hands_value[0] == 1:
+                arm_index = 0
+                arm = "left"
+            else:
+                arm_index = 1
+                arm = "right"
+
             self.in_process = True
             printr("Emergency called!!")
             peril_msg = Bool()
@@ -48,20 +53,21 @@ class EmergencyClient:
             self.hand_pub.publish(hand_msg)
 
             # call("/myrobot/controller_manager/switch_controller", SwitchController,
-            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
+            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
                 start_controllers=[],
-                stop_controllers=["right_cartesian_motion_controller", "right_arm_controller"],
+                stop_controllers=["{}_cartesian_motion_controller".format(arm), "{}_arm_controller".format(arm)],
                 strictness=1, start_asap=False, timeout=0.0)
             
             rospy.sleep(1)
 
 
+            startup_pub = rospy.Publisher('/startup/{}'.format(arm), Empty, queue_size=1)
             empty_msg = Empty()
-            self.startup_pub.publish(empty_msg)
+            startup_pub.publish(empty_msg)
 
             # call("/myrobot/controller_manager/switch_controller", SwitchController,
-            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
-                start_controllers=["right_cartesian_motion_controller"],
+            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                start_controllers=["{}_cartesian_motion_controller".format(arm)],
                 stop_controllers=[""],
                 strictness=1, start_asap=True, timeout=5.0)
 
@@ -80,20 +86,18 @@ class EmergencyClient:
 
             printb("up finished")
 
-            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
-                start_controllers=["right_arm_controller"],
-                stop_controllers=["right_cartesian_motion_controller"],
+            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                start_controllers=["{}_arm_controller".format(arm)],
+                stop_controllers=["{}_cartesian_motion_controller".format(arm)],
                 strictness=1, start_asap=True, timeout=5.0)
             
-
             # rospy.sleep(1)
 
-
-            mv_right_arm = MoveGroup("back_and_right_arm")
-            target_name = "back_and_right_arm_start"
-            target_joint_dict = mv_right_arm.get_named_target_values(target_name)
-            plan = mv_right_arm.plan(target_joint_dict)
-            mv_right_arm.execute(plan, wait=True)
+            mv_arm = MoveGroup("{}_arm".format(arm))
+            target_name = "{}_arm_start".format(arm)
+            target_joint_dict = mv_arm.get_named_target_values(target_name)
+            plan = mv_arm.plan(target_joint_dict)
+            mv_arm.execute(plan, wait=True)
 
             peril_msg.data = False
             self.pub.publish(peril_msg)

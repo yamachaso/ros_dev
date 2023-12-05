@@ -9,9 +9,11 @@ from detect.msg import GraspDetectionAction, GraspDetectionGoal, CalcurateInsert
 # ref: https://qiita.com/ynott/items/8acd03434569e23612f1
 # class GraspDetectionClient(SimpleActionClient, object):
 class GraspDetectionClient:
-    def __init__(self, fps, image_topic, depth_topic, points_topic, ns="grasp_detection_server", ActionSpec=GraspDetectionAction, wait=True):
+    def __init__(self, arm_index, fps, image_topic, depth_topic, points_topic, ns="grasp_detection_server", ActionSpec=GraspDetectionAction, wait=True):
         # super(GraspDetectionClient, self).__init__(ns, ActionSpec)
         delay = 1 / fps * 0.5
+
+        self.arm_index = arm_index
 
         # Topics
         self.points_topic = points_topic
@@ -37,7 +39,7 @@ class GraspDetectionClient:
     def callback(self, img_msg, depth_msg, points_msg):
         try:
             # points_msg = rospy.wait_for_message(self.points_topic, PointCloud2)
-            self.request = GraspDetectionGoal(img_msg, depth_msg, points_msg)
+            self.request = GraspDetectionGoal(self.arm_index, img_msg, depth_msg, points_msg)
             self.request2 = CalcurateInsertionGoal(img_msg, depth_msg, points_msg)
         except Exception as err:
             rospy.logerr(err)

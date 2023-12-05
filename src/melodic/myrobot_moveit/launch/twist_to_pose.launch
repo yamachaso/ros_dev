@@ -1,10 +1,19 @@
 <launch>
-    <node name="spacenav_to_pose" pkg="myrobot_moveit" type="pose.py" output="screen">
+    <node name="spacenav_to_pose_right" pkg="myrobot_moveit" type="pose.py" output="screen">
         <param name="twist_topic" value="/cmd_vel/right"/>
         <param name="startup_topic" value="/startup/right"/>
         <param name="pose_topic" value="/target_frame/right"/>
         <param name="frame_id" value="body"/>
         <param name="end_effector" value="right_soft_hand_tip"/>
+        <param name="publishing_rate" value="10"/>
+    </node>
+
+    <node name="spacenav_to_pose_left" pkg="myrobot_moveit" type="pose.py" output="screen">
+        <param name="twist_topic" value="/cmd_vel/left"/>
+        <param name="startup_topic" value="/startup/left"/>
+        <param name="pose_topic" value="/target_frame/left"/>
+        <param name="frame_id" value="body"/>
+        <param name="end_effector" value="left_soft_hand_tip"/>
         <param name="publishing_rate" value="10"/>
     </node>
 

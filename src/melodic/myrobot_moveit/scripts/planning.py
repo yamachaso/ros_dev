@@ -1,6 +1,5 @@
 #!/usr/bin/env python2
 # coding: UTF-8
-
 import math
 import sys
 
@@ -26,25 +25,28 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from exclusion_list_client import ExclusionListClient
 
 class MoveGroup(mc.MoveGroupCommander):
-    def __init__(self, name, planning_time=5):
+    def __init__(self, name, scaling_factor=1, planning_time=5):
         super(MoveGroup, self).__init__(name)
         self.set_planning_time(planning_time)
+        self.set_max_velocity_scaling_factor(scaling_factor)
 
     # ジョイント名をキー, 関節角度値を値とした辞書
     def get_current_joint_dict(self):
         return dict(zip(self.get_active_joints(), self.get_current_joint_values()))
 
 class MoveGroupHandler:
-    def __init__(self, left_start_move_group, right_start_move_group, start_move_group, whole_move_group):
+    def __init__(self, left_start_move_group, right_start_move_group, whole_move_group):
         self.left_start_move_group = left_start_move_group
-        self.left_eef_default_pose = left_start_move_group.get_current_pose().pose
+        # self.left_eef_default_pose = left_start_move_group.get_current_pose().pose
         self.right_start_move_group = right_start_move_group
-        self.right_eef_default_pose = right_start_move_group.get_current_pose().pose
-        self.start_move_group = start_move_group
-        self.start_eef_default_pose = start_move_group.get_current_pose().pose
+        # self.right_eef_default_pose = right_start_move_group.get_current_pose().pose
         self.whole_move_group = whole_move_group
         self.whole_name = whole_move_group.get_name()
-        self.set_current_move_group(self.start_move_group, self.start_eef_default_pose)
+
+        # left arm (arm_index: 0) からスタート
+        self.set_current_move_group(0)
+        # self.current_move_group = left_start_move_group
+        # self.current_eef_default_pose = left_start_move_group.get_current_pose().pose
 
         self.is_in_peril = False
         self.sub = rospy.Subscriber("/is_in_peril", Bool, self.set_peril)
@@ -54,51 +56,40 @@ class MoveGroupHandler:
     def set_peril(self, msg):
         self.is_in_peril = msg.data
 
-    def set_current_move_group(self, move_group, default_eef_pose=None):
-        self.current_move_group = move_group
-        self.current_eef_default_pose = default_eef_pose
-        rospy.loginfo("current move group is changed to '{}'".format(self.get_current_name()))
+    def set_current_move_group(self, arm_index):
+        if arm_index == 0:
+            self.current_move_group = self.left_start_move_group
+            # self.current_eef_default_pose = self.left_eef_default_pose
+        elif arm_index == 1:
+            self.current_move_group = self.right_start_move_group
+            # self.current_eef_default_pose = self.right_eef_default_pose 
 
-    def reset_move_group(self):
-        # TODO: also reset joint values
-        self.current_move_group = self.start_move_group
-        self.current_eef_default_pose = self.start_eef_default_pose
-        
-    def initialize_current_pose(self, cartesian_mode=False, c_eef_step=0.01, c_jump_threshold=0.0, wait=True, plan_only=True):
+    def initialize_current_pose(self, wait=True):
         group_name = self.get_current_name()
-        # target_name = "{}_default".format(group_name)
         target_name = "{}_start".format(group_name)
         target_joint_dict = self.current_move_group.get_named_target_values(target_name)
-        if cartesian_mode:
-            waypoints = [self.current_eef_default_pose]
-            plan, _ = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
-        else:
-            plan = self.current_move_group.plan(target_joint_dict)
-        if not plan_only:
-            self.current_move_group.execute(plan, wait=wait)
-        return plan
+        plan = self.current_move_group.plan(target_joint_dict)
+        self.current_move_group.execute(plan, wait=wait)
 
-    def initialize_whole_pose(self, wait=True, plan_only=False):
+    def initialize_whole_pose(self, wait=True,):
         # target_name = "{}_default".format(self.whole_name)
         target_name = "{}_start".format(self.whole_name)
         target_joint_dict = self.whole_move_group.get_named_target_values(target_name)
         plan = self.whole_move_group.plan(target_joint_dict)
-        if not plan_only:
-            self.whole_move_group.execute(plan, wait=wait)
-        return plan
+        self.whole_move_group.execute(plan, wait=wait)
 
 
-    def plan(self, joints={}, is_degree=False, **kwargs):
-        # if plan failed, switch move_group & plan again
-        new_joints = joints
-        new_joints.update(kwargs)
-        if is_degree:
-            new_joints = { k:np.radians(v)  for k,v in new_joints.items()}
+    # def plan(self, joints={}, is_degree=False, **kwargs):
+    #     # if plan failed, switch move_group & plan again
+    #     new_joints = joints
+    #     new_joints.update(kwargs)
+    #     if is_degree:
+    #         new_joints = { k:np.radians(v)  for k,v in new_joints.items()}
 
-        merged_joints = self.whole_move_group.get_current_joint_dict()
-        merged_joints.update(new_joints)
+    #     merged_joints = self.whole_move_group.get_current_joint_dict()
+    #     merged_joints.update(new_joints)
         
-        return self.whole_move_group.plan(merged_joints)
+    #     return self.whole_move_group.plan(merged_joints)
 
     def execute(self, plan, wait):
         res =  self.whole_move_group.execute(plan, wait=wait)
@@ -114,17 +105,6 @@ class MoveGroupHandler:
         hand_enable_msg.data = True 
         hand_enable_pub.publish(hand_enable_msg)
 
-        # pre_pose = self.current_eef_default_pose
-        # grasp_position = grasps[0].grasp_pose.pose.position # x, y are same among grasps
-        # apploach_desired_distance = grasps[0].pre_grasp_approach.desired_distance
-        # pre_pose.position.x = grasp_position.x
-        # pre_pose.position.y = grasp_position.y
-        # pre_pose.position.z =  grasp_position.z + apploach_desired_distance
-        # pre_pose.orientation =  grasps[0].grasp_pose.pose.orientation
-
-        # pre_pose = target_pose
-        # pre_pose.position.z += approach_desired_distance
-        # waypoints = [pre_pose]
         printr("target_pose : ")
         printr(target_pose)
 
@@ -144,24 +124,24 @@ class MoveGroupHandler:
             return False
 
 
-    def pick(self, target_pose, access_distance, target_pressure, z_direction, c_eef_step=0.001, c_jump_threshold=0.0):
+    def pick(self, arm_index, target_pose, access_distance, target_pressure, z_direction, c_eef_step=0.001, c_jump_threshold=0.0):
         printb("pick planning start")
+        if arm_index == 0:
+            arm = "left"
+        elif arm_index == 1:
+            arm = "right"
 
         printb("hand adjustment execution")
         if self.is_in_peril:
                 return False
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
-        hand_msg.data = [0.0, target_pressure] # 右アームのみ
+        hand_msg.data = [0.0, 0.0] # 右アームのみ
+        hand_msg.data[arm_index] = target_pressure # 右アームのみ
         hand_pub.publish(hand_msg)
 
         printc("target_pressure : {}".format(target_pressure))
 
-
-        # pre_pose = self.current_eef_default_pose
-        # pre_pose = self.current_move_group.get_current_pose().pose
-        # pre_pose.position = target_pose.position #TODO TMP
-        # pre_pose.orientation =  target_pose.orientation
         waypoints = [target_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         print("pose score", plan_score)
@@ -180,7 +160,7 @@ class MoveGroupHandler:
 
         # 先に位置姿勢と取得して、その後コントローラーを切り替える
         # さもないと指令加速度過大になりがち
-        startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+        startup_pub = rospy.Publisher('/startup/{}'.format(arm), Empty, queue_size=1)
         empty_msg = Empty()
         startup_pub.publish(empty_msg)
 
@@ -188,16 +168,14 @@ class MoveGroupHandler:
         if self.is_in_peril:
                 return False
         try:
-            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
-                start_controllers=["right_cartesian_motion_controller"],
-                stop_controllers=["right_arm_controller"],
+            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                start_controllers=["{}_cartesian_motion_controller".format(arm)],
+                stop_controllers=["{}_arm_controller".format(arm)],
                 strictness=1, start_asap=False, timeout=0.0)
 
         except rospy.ServiceException as e:
             print("Service call failed: %s" % e)
 
-            
-        
 
         # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
         # move_time = 1.35 - access_distance / 0.03 * 0.1
@@ -226,7 +204,7 @@ class MoveGroupHandler:
         printb("grab execution")
         if self.is_in_peril:
                 return False
-        hand_msg.data = [0.0, 1.6]
+        hand_msg.data[arm_index] = 1.6
         hand_pub.publish(hand_msg)
         printb("grabed")
 
@@ -250,9 +228,9 @@ class MoveGroupHandler:
 
 
         try:
-            call("/myrobot/right_arm/controller_manager/switch_controller", SwitchController,
-                start_controllers=["right_arm_controller"],
-                stop_controllers=["right_cartesian_motion_controller"],
+            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                start_controllers=["{}_arm_controller".format(arm)],
+                stop_controllers=["{}_cartesian_motion_controller".format(arm)],
                 strictness=1, start_asap=False, timeout=0.0)
 
         except rospy.ServiceException as e:
@@ -265,12 +243,10 @@ class MoveGroupHandler:
         return True
 
 
-    def place(self, object_name, target_pose, c_eef_step=0.001, c_jump_threshold=0.0):
+    def place(self):
 
         target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_place")
         plan = self.mv_right_arm.plan(target_joint_dict)
-
-
 
         printb("pre place execution")
         if self.is_in_peril:
@@ -338,70 +314,50 @@ class ContactOrientationController:
 
 
 class Myrobot:
-    def __init__(self, fps, image_topic, depth_topic, points_topic, raw_point_topics, wait = True, use_constraint = False, add_ground = False, used_camera = "left_camera"):
+    def __init__(self, fps, left_image_topic, left_depth_topic, left_points_topic, 
+                 right_image_topic, right_depth_topic, right_points_topic, wait = True):
         mc.roscpp_initialize(sys.argv)
 
         self.robot = mc.RobotCommander()
         self.scene_handler = mc.PlanningSceneInterface(synchronous=True)
-        # self.scene_handler = PlanningSceneHandler(raw_point_topics)
 
-        # box_pose = PoseStamped()
-        # box_pose.header.frame_id = "world"
-        # box_pose.pose.position =Vector3(0, -1, 0.2)
-        # q = quaternion_from_euler(0.0, 0.0, 0.0)
-        # box_pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-        # support_surface_name = "table"
-        # self.scene_handler.add_box(support_surface_name, box_pose, size=(0.5, 0.5, 0.4))
-#         if add_ground:
-#             plane_pose = PoseStamped()
-#             plane_pose.header.frame_id = "world"
-#             self.scene_handler.add_plane("ground plane", plane_pose)    
-
-        # constraints
-        # if use_constraint:
-        #     constraint_rpy = (0, math.pi, 0) # TODO: compute z from finger property (now 45 for 4 fingers)
-        #     constraint_xyz_tolerance = (0.05, 0.05, 3.6) # TODO: update this value
-        #     # constraint_xyz_tolerance = (0.08726, 0.08726, 6.28318) # TODO: update this value
-        #     left_hand_constraint = self._create_constraint("left_hand_constraint", link_name="left_soft_hand_base_link", 
-        #                                                 rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
-        #     right_hand_constraint = self._create_constraint("right_hand_constraint", link_name="right_soft_hand_base_link", 
-        #                                                 rpy=constraint_rpy, xyz_tolerance=constraint_xyz_tolerance)
-        # else:
-        # left_hand_constraint = Constraints()
-        # right_hand_constraint = Constraints()
-
-        mv_base_to_left_arm = MoveGroup("base_and_left_arm", planning_time=10)
-        mv_body_to_left_arm = MoveGroup("body_and_left_arm", planning_time=10)
-        mv_left_arm = MoveGroup("left_arm", planning_time=10)
+        # left groups
+        mv_group_left = MoveGroup("left_arm", scaling_factor=1, planning_time=10)
+        # mv_body_to_left_arm = MoveGroup("body_and_left_arm", planning_time=10)
         # right groups
-        mv_base_to_right_arm = MoveGroup("base_and_right_arm", planning_time=10)
-        mv_body_to_right_arm = MoveGroup("body_and_right_arm", planning_time=10)
-        mv_right_arm = MoveGroup("right_arm", planning_time=10)
+        mv_group_right = MoveGroup("right_arm", scaling_factor=1, planning_time=10)
+        # mv_body_to_right_arm = MoveGroup("body_and_right_arm", planning_time=10)
         # whole group
-        # TODO: constraintあてる
-        mv_base_to_arms = MoveGroup("base_and_arms", planning_time=10)
+        mv_group_while = MoveGroup("back_and_arms", scaling_factor=1, planning_time=10)
 
-        #############
-        mv_back_and_arm = MoveGroup("back_and_right_arm", planning_time=10)
-        #############
- 
         printg("movegroup load : SUCCESS")
 
+        self.mv_handler = MoveGroupHandler(mv_group_left, mv_group_right, mv_group_while)
+        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, mv_base_to_arms)
+        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm,  mv_right_arm)
 
-        # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
-        # start_mv = mv_body_to_left_arm if used_camera == "left_camera" else mv_body_to_right_arm
-        start_mv = mv_left_arm if used_camera == "left_camera" else mv_right_arm
-        # self.mv_handler = MoveGroupHandler(mv_base_to_left_arm, mv_base_to_right_arm, start_mv, mv_base_to_arms)
-        # self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_base_to_arms)
-        self.mv_handler = MoveGroupHandler(mv_left_arm, mv_right_arm, start_mv, mv_right_arm)
+        self.arm_index = 0
 
-        self.gd_cli = GraspDetectionClient( 
-            fps=fps, 
-            image_topic=image_topic, 
-            depth_topic=depth_topic,
-            points_topic=points_topic,
-            wait=wait
-        )
+        self.gd_cli = [
+            # for left arm     
+            GraspDetectionClient( 
+                arm_index = 0,
+                fps=fps,
+                image_topic=left_image_topic, 
+                depth_topic=left_depth_topic,
+                points_topic=left_points_topic,
+                wait=wait
+            ),
+            # for right arm
+            GraspDetectionClient(
+                 arm_index = 1, 
+                fps=fps, 
+                image_topic=right_image_topic, 
+                depth_topic=right_depth_topic,
+                points_topic=right_points_topic,
+                wait=wait
+            )
+        ]
 
         self.cp_cli = ContainerPositionClient()
 
@@ -413,50 +369,41 @@ class Myrobot:
     def set_robot_status_good(self):
         self.mv_handler.is_in_peril = False
 
-    def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
-        q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
-        constraint = Constraints(
-            name=name,
-            orientation_constraints = [OrientationConstraint(
-                header=Header(frame_id=base_frame_id),
-                link_name=link_name,
-                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
-                # allow max rotations
-                absolute_x_axis_tolerance = xyz_tolerance[0],
-                absolute_y_axis_tolerance = xyz_tolerance[1],
-                absolute_z_axis_tolerance = xyz_tolerance[2],
-                weight = 1
-            )]
-        )
-        return constraint
+    def set_arm_index(self, arm_index):
+         self.arm_index = arm_index
+         self.mv_handler.set_current_move_group(arm_index)
 
-    def initialize_current_pose(self, cartesian_mode=False, c_eef_step=0.01, c_jump_threshold=0.0):
-        self.mv_handler.initialize_current_pose(cartesian_mode, c_eef_step, c_jump_threshold)
-        self.mv_handler.reset_move_group()
+    # def _create_constraint(self, name, link_name, rpy, base_frame_id="base_link", xyz_tolerance=(0.05, 0.05, 3.6)):
+    #     q = quaternion_from_euler(rpy[0], rpy[1], rpy[2])
+    #     constraint = Constraints(
+    #         name=name,
+    #         orientation_constraints = [OrientationConstraint(
+    #             header=Header(frame_id=base_frame_id),
+    #             link_name=link_name,
+    #             orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
+    #             # allow max rotations
+    #             absolute_x_axis_tolerance = xyz_tolerance[0],
+    #             absolute_y_axis_tolerance = xyz_tolerance[1],
+    #             absolute_z_axis_tolerance = xyz_tolerance[2],
+    #             weight = 1
+    #         )]
+    #     )
+    #     return constraint
+
+    def initialize_current_pose(self):
+        self.mv_handler.initialize_current_pose()
 
     def initialize_whole_pose(self):
         self.mv_handler.initialize_whole_pose()
-        self.mv_handler.reset_move_group()
 
-    # def get_around_octomap(self, values=[-30, 30, 0], sleep_time=0, is_degree=False, should_reset=True):
-    #     if should_reset:
-    #         self.scene_handler.clear_octomap()
-    #     for value in values:
-    #         plan = self.plan(joint_back=value, is_degree=is_degree)
-    #         self.execute(plan, wait=True)
-    #         rospy.sleep(sleep_time)
-    #         self.scene_handler.update_octomap()
-    #         rospy.sleep(sleep_time)
+    # def plan(self, joints={}, is_degree=False, **kwargs):
+    #     return self.mv_handler.plan(joints, is_degree, **kwargs)
 
-    def plan(self, joints={}, is_degree=False, **kwargs):
-        return self.mv_handler.plan(joints, is_degree, **kwargs)
-
-    def execute(self, plan, wait=False):
-        res =  self.mv_handler.execute(plan, wait)
-        return res
+    # def execute(self, plan, wait=False):
+    #     res =  self.mv_handler.execute(plan, wait)
+    #     return res
 
     def approach(self, object_msg, c_eef_step=0.01, c_jump_threshold=0.0):
-        arm_index = 1
         approach_desired_distance = object_msg.length_to_center
         contact = object_msg.contact
 
@@ -474,7 +421,7 @@ class Myrobot:
         target_pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
         res = self.mv_handler.approach(target_pose, c_eef_step, c_jump_threshold)
-        return res, arm_index
+        return res
     
     def pick(self, res_msg, contact, c_eef_step=0.01, c_jump_threshold=0.0):
         # obj_position_point = target_pose.position
@@ -504,41 +451,28 @@ class Myrobot:
         print(target_pose.position)
 
 
-        res = self.mv_handler.pick(target_pose, access_distance, target_pressure, coc.z_direction[contact], c_eef_step, c_jump_threshold)
+        res = self.mv_handler.pick(self.arm_index, target_pose, access_distance, target_pressure, coc.z_direction[contact], c_eef_step, c_jump_threshold)
         return res
         
 
-    def place(self, arm_index, object_name, approach_desired_distance=0.1, approach_min_distance=0.05, retreat_desired_distance=0.01, retreat_min_distance=0.05):       
+    def place(self):       
         # place_position = (1.1, -0.63, 0.78)
         place_position = (1.35, -0.63, 0.55)
         pose = Pose()
         pose.position.x, pose.position.y, pose.position.z = place_position
-        res = self.mv_handler.place(object_name, pose)
+        res = self.mv_handler.place()
         return res        
 
     def detect(self):
-        return self.gd_cli.detect()
+        return self.gd_cli[self.arm_index].detect()
     
     def calcurate_insertion(self):
-        return self.gd_cli.calcurate_insertion()
-
-    def select_arm(self, y):
-        # 0: left, 1: right
-        arm_index =  0 if y > 0 else 1
-        print("y: {}, arm_index: {}".format(y, arm_index))
-        if arm_index == 0:
-            new_move_group = self.mv_handler.left_start_move_group
-            new_eef_default_pose = self.mv_handler.left_eef_default_pose
-        else:
-            new_move_group = self.mv_handler.right_start_move_group
-            new_eef_default_pose = self.mv_handler.right_eef_default_pose
-
-        self.mv_handler.set_current_move_group(new_move_group, new_eef_default_pose)
-        return arm_index
+        return self.gd_cli[self.arm_index].calcurate_insertion()
     
+    def add_exclusion_cabbage(self, u, v):
+         return self.el_cli.add(self.arm_index, u, v)
+
     def set_container(self):
-        # listener = tf.TransformListener()
-        # (trans, rot) = listener.lookupTransform('/base_link', '/container_base', rospy.Time(0))
 
         res = self.cp_cli.get()
 
@@ -584,29 +518,31 @@ if __name__ == "__main__":
     # ref: http://zumashi.blogspot.com/2016/10/rosrun.html
     ns = rospy.get_param("robot_name", default="myrobot")
     fps = rospy.get_param("fps", default=1)
-    image_topic = rospy.get_param("image_topic")
-    depth_topic = rospy.get_param("depth_topic")
-    points_topic = rospy.get_param("points_topic")
-    sensors = rospy.get_param("sensors", default=("left_camera", "right_camera", "body_camera"))
-    grasp_only = rospy.get_param("grasp_only", default="false")
-    raw_point_topics = ["/{}/{}/depth/color/points".format(ns, sensor_name) for sensor_name in sensors]
+    left_image_topic = rospy.get_param("left_image_topic")
+    left_depth_topic = rospy.get_param("left_depth_topic")
+    left_points_topic = rospy.get_param("left_points_topic")
+    right_image_topic = rospy.get_param("right_image_topic")
+    right_depth_topic = rospy.get_param("right_depth_topic")
+    right_points_topic = rospy.get_param("right_points_topic")
+    # sensors = rospy.get_param("sensors", default=("left_camera", "right_camera", "body_camera"))
 
     wait = rospy.get_param("wait_server", default=True)
-    use_constraint = rospy.get_param("use_constraint", default=False)
-    used_camera = rospy.get_param("used_camera", default="left_camera")
 
     rospy.loginfo("################################################")
 
     print("waiting for image topics")
     rospy.logerr("################################################")
 
-    rospy.wait_for_message(image_topic, Image)
-    rospy.wait_for_message(depth_topic, Image)
+    rospy.wait_for_message(left_image_topic, Image)
+    rospy.wait_for_message(left_depth_topic, Image)
+    rospy.wait_for_message(right_image_topic, Image)
+    rospy.wait_for_message(right_depth_topic, Image)
 
     print("initializing instances...")
-    myrobot = Myrobot(fps=fps, image_topic=image_topic, depth_topic=depth_topic, points_topic=points_topic, 
-                      raw_point_topics=raw_point_topics, wait=wait, use_constraint=use_constraint, add_ground=True,
-                      used_camera=used_camera)
+    myrobot = Myrobot(fps=fps, left_image_topic=left_image_topic, left_depth_topic=left_depth_topic, left_points_topic=left_points_topic, 
+                      right_image_topic=right_image_topic, right_depth_topic=right_depth_topic, right_points_topic=right_points_topic, 
+                      wait=wait)
+
     myrobot.info()
     # hand_radius_mmはdetect側のlaunchで設定しているのでwait後に読み込み
     hand_radius_mm = rospy.get_param("hand_radius_mm", default="157.5")
@@ -622,8 +558,6 @@ if __name__ == "__main__":
     ### myrobot.get_around_octomap(values=[-30, 30, 0], sleep_time=1.0, is_degree=True, should_reset=True)
 
     print("stating detect flow...")
-    registered_objects = []
-
 
     # 最初のメッセージがなぜか無視されるので、ダミーで一回パブリッシュ
     hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
@@ -631,9 +565,12 @@ if __name__ == "__main__":
     hand_msg.data = [0.0, 0.0]
     hand_pub.publish(hand_msg)
     # 同様の理由でここでもパブリッシュ
-    startup_pub = rospy.Publisher('/startup/right', Empty, queue_size=1)
+    startup_pub_left = rospy.Publisher('/startup/left', Empty, queue_size=1)
     empty_msg = Empty()
-    startup_pub.publish(empty_msg)
+    startup_pub_left.publish(empty_msg)
+    startup_pub_right = rospy.Publisher('/startup/right', Empty, queue_size=1)
+    empty_msg = Empty()
+    startup_pub_right.publish(empty_msg)
     lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
     lower_speed = HandSpeedDirection()
     lower_speed.speed = 0
@@ -647,90 +584,122 @@ if __name__ == "__main__":
     is_in_peril = False
 
     while not rospy.is_shutdown():
-        if myrobot.is_in_peril():
-            printr("now robot is in peril...")
-            rospy.sleep(1)
-            continue
         rospy.logerr("loop start")
+
+        myrobot.initialize_whole_pose()
 
         myrobot.set_container()
 
-        rospy.sleep(0.1)
-        # TODO: 作業完了したかのフラグ作って基準状態以外では検出が走らないようにしたい
-        # object = myrobot.detect()
-        # print("objects: {}".format(len(objects)))
-        # if len(objects) == 0:
-        #     continue
+        # left arm (arm_index: 0)
+        myrobot.set_arm_index(0)
 
-        # scores = [obj.score for obj in objects]
-        # print("scores : ", scores)
-        # ordered_indexes = np.argsort(scores)
-        # # ordered_indexes = np.argsort(scores)[::-1] # 降順
-        # target_index = ordered_indexes[0]
+        while True:
+            printp("=== left arm start ===")
+            if myrobot.is_in_peril():
+                printr("now robot is in peril...")
+                rospy.sleep(1)
+                continue
 
-        # obj = objects[target_index]
-        obj = myrobot.detect()
-        obj_name = "object_{}".format(len(registered_objects))
-        # TMP: ズレの補正
-        # obj.center_pose.pose.position.y -= 0.01
+            rospy.sleep(0.1)
 
-        # visualize target
-        # vis_cli.send_goal(VisualizeTargetGoal(obj.index))
-        obj_center = obj.center.uv
-        printg("obj_cetner : {}".format(obj_center)) 
-        # add object
-        obj_pose = obj.center_pose
-        # obj_pose.pose.position.z -= obj.length_to_center / 2
-        obj_pose.pose.orientation = Quaternion()
-        # obj.length_to_center = obj.length_to_center * 1.3
-        insert_depth = obj.length_to_center
-        # TMP: 検出対象の外接矩形の半径からradiusを求めていたが若干精度悪い気がするので一旦固定値にしている
-        # myrobot.scene_handler.add_cylinder(obj_name, obj_pose, height=obj.length_to_center, radius=collision_radius * 0.6)
-        ### myrobot.scene_handler.update_octomap()
+            obj = myrobot.detect()
 
-        is_detect_successed = False
-        printy(obj_pose.pose.position.y)
-        
-        # 右アームは左半分位あるキャベツを無視する
-        if obj_pose.pose.position.y < 0:
-            is_detect_successed = True 
+            printg("obj_cetner : {}".format(obj.center.uv)) 
+            printg("object score: {}".format(obj.score))
+            printg("contact : {}".format(obj.contact))
 
-        printy("contact : {}".format(obj.contact))
-
-        # pick
-        print("try to pick | score: {}".format(obj.score))
-        # TODO: pull up arm index computation from pick
-        is_approach_successed = False
-        arm_index = -1
-        if is_detect_successed and not myrobot.is_in_peril():
-            is_approach_successed, arm_index = myrobot.approach(obj)
-        printy("is_approach_successed : {}".format(is_approach_successed))
-
-        is_pick_successed = False
-        if is_approach_successed and not myrobot.is_in_peril():
-            res = myrobot.calcurate_insertion()
-            if res.success and not myrobot.is_in_peril():
-                # is_pick_successed = myrobot.pick(res.pose, res.angle, res.distance, res.pressure)
-                is_pick_successed = myrobot.pick(res, obj.contact)
-            else:
-                printr("no good cabbage...")
-        printy("is_pick_successed : {}".format(is_pick_successed))
+            is_detect_successed = False
             
-        print("pick result : {}".format(is_approach_successed))
+            # 右半分にあるキャベツは無視する
+            if obj.center_pose.pose.position.y >= 0:
+                is_detect_successed = True 
+
+            # approach 
+            is_approach_successed = False
+            if is_detect_successed and not myrobot.is_in_peril():
+                is_approach_successed = myrobot.approach(obj)
+            printy("is_approach_successed : {}".format(is_approach_successed))
+
+            # pick
+            is_pick_successed = False
+            if is_approach_successed and not myrobot.is_in_peril():
+                res = myrobot.calcurate_insertion()
+                if res.success and not myrobot.is_in_peril():
+                    is_pick_successed = myrobot.pick(res, obj.contact)
+                else:
+                    printr("no good cabbage...")
+            printy("is_pick_successed : {}".format(is_pick_successed))
+                
+            if is_pick_successed:
+                printp("=== left arm end ===")
+                break
+
+            if not is_approach_successed or not is_pick_successed:
+                obj_center = obj.center.uv
+                myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+
+
+        myrobot.initialize_current_pose()
+
+        # right arm (arm_index: 1)
+        myrobot.set_arm_index(1)
+
+        while True:
+            printp("=== right arm start ===")
+            if myrobot.is_in_peril():
+                printr("now robot is in peril...")
+                rospy.sleep(1)
+                continue
+
+            rospy.sleep(0.1)
+
+            obj = myrobot.detect()
+
+            printg("obj_cetner : {}".format(obj.center.uv)) 
+            printg("object score: {}".format(obj.score))
+            printg("contact : {}".format(obj.contact))
+
+            is_detect_successed = False
+            
+            # 左半分にあるキャベツは無視する
+            if obj.center_pose.pose.position.y <= 0:
+                is_detect_successed = True 
+
+            # approach 
+            is_approach_successed = False
+            if is_detect_successed and not myrobot.is_in_peril():
+                is_approach_successed = myrobot.approach(obj)
+            printy("is_approach_successed : {}".format(is_approach_successed))
+
+            # pick
+            is_pick_successed = False
+            if is_approach_successed and not myrobot.is_in_peril():
+                res = myrobot.calcurate_insertion()
+                if res.success and not myrobot.is_in_peril():
+                    is_pick_successed = myrobot.pick(res, obj.contact)
+                else:
+                    printr("no good cabbage...")
+            printy("is_pick_successed : {}".format(is_pick_successed))
+                
+            if is_pick_successed:
+                printp("=== right arm end ===")
+                break
+
+            if not is_approach_successed or not is_pick_successed:
+                obj_center = obj.center.uv
+                myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+ 
+        myrobot.initialize_current_pose()
 
         myrobot.delete_container()
 
         is_place_successed = False
         if is_pick_successed and not myrobot.is_in_peril():
             # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
-            myrobot.initialize_whole_pose()
-            is_place_successed = myrobot.place(arm_index, obj_name)
+            # myrobot.initialize_whole_pose()
+            is_place_successed = myrobot.place()
             print("place result : {}".format(is_place_successed))
         printy("is_place_successed : {}".format(is_place_successed))
-
-
-        link = "left_soft_hand_tip" if arm_index == 0 else "right_soft_hand_tip"
-        # myrobot.scene_handler.remove_attached_object(link) 
 
 
         if myrobot.is_in_peril():
@@ -746,12 +715,4 @@ if __name__ == "__main__":
         hand_msg.data = [0.0, 0.0]
         hand_pub.publish(hand_msg)
 
-
-        if not is_approach_successed or not is_pick_successed:
-            print(obj_center)
-            myrobot.el_cli.add(obj_center[0], obj_center[1])
-
         printg("initialized!!")
-
-        # myrobot.scene_handler.remove_world_object(obj_name)
-        ### myrobot.scene_handler.update_octomap()
