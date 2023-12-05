@@ -12,6 +12,8 @@
     <!-- b-CAP Slave motion control cycle [millisecond] -->
     <arg name="bcap_slave_control_cycle_msec" default="8" />
 
+    <arg name="node_start_delay" default="4.0" />  
+
     <!-- following params to be wanted to be placed under the each node -->
     <!-- Controller -->
     <group ns="/$(arg robot_name)/right_arm">
@@ -24,7 +26,7 @@
         <include file="$(find myrobot_moveit)/config/left_arm_config.launch.xml" >
             <arg name="ip_address" value="$(arg ip_address_left)" />
         </include>
-        <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" />
+        <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
     </group>
 
     <rosparam file="$(find myrobot_moveit)/config/real_controllers.yaml" command="load" />

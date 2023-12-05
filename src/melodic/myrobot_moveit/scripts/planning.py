@@ -124,7 +124,7 @@ class MoveGroupHandler:
             return False
 
 
-    def pick(self, arm_index, target_pose, access_distance, target_pressure, z_direction, c_eef_step=0.001, c_jump_threshold=0.0):
+    def pick(self, arm_index, target_pose, access_distance, target_pressure, z_direction, down=True, c_eef_step=0.001, c_jump_threshold=0.0):
         printb("pick planning start")
         if arm_index == 0:
             arm = "left"
@@ -156,7 +156,6 @@ class MoveGroupHandler:
 
         rospy.sleep(0.1)
 
-        print("##################################")
 
         # 先に位置姿勢と取得して、その後コントローラーを切り替える
         # さもないと指令加速度過大になりがち
@@ -167,76 +166,76 @@ class MoveGroupHandler:
 
         if self.is_in_peril:
                 return False
-        try:
-            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
-                start_controllers=["{}_cartesian_motion_controller".format(arm)],
-                stop_controllers=["{}_arm_controller".format(arm)],
-                strictness=1, start_asap=False, timeout=0.0)
+        if down:
+            try:
+                call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                    start_controllers=["{}_cartesian_motion_controller".format(arm)],
+                    stop_controllers=["{}_arm_controller".format(arm)],
+                    strictness=1, start_asap=False, timeout=0.0)
 
-        except rospy.ServiceException as e:
-            print("Service call failed: %s" % e)
-
-
-        # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
-        # move_time = 1.35 - access_distance / 0.03 * 0.1
-        move_time = 1.35 - access_distance * 0.01 
-
-        printc("access_distance : {}".format(access_distance))
-        printc("move_time : {}".format(move_time))
-
-        printb("down execution")
-        if self.is_in_peril:
-                return False
-        lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
-        lower_speed = HandSpeedDirection()
-        lower_speed.speed = 0.1
-        lower_speed.direction = Vector3(x = z_direction[0], y = z_direction[1] , z = z_direction[2])
-        lower_speed_pub.publish(lower_speed)
-
-        rospy.sleep(move_time)
+            except rospy.ServiceException as e:
+                print("Service call failed: %s" % e)
 
 
-        lower_speed.speed = 0
-        lower_speed_pub.publish(lower_speed)
+            # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
+            # move_time = 1.35 - access_distance / 0.03 * 0.1
+            move_time = 1.35 - access_distance * 0.01 
 
-        rospy.sleep(move_time)
+            printc("access_distance : {}".format(access_distance))
+            printc("move_time : {}".format(move_time))
 
-        printb("grab execution")
-        if self.is_in_peril:
-                return False
-        hand_msg.data[arm_index] = 1.6
-        hand_pub.publish(hand_msg)
-        printb("grabed")
+            printb("down execution")
+            if self.is_in_peril:
+                    return False
+            lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
+            lower_speed = HandSpeedDirection()
+            lower_speed.speed = 0.1
+            lower_speed.direction = Vector3(x = z_direction[0], y = z_direction[1] , z = z_direction[2])
+            lower_speed_pub.publish(lower_speed)
 
-        rospy.sleep(1.5)
-
-        printb("up execution")
-        if self.is_in_peril:
-                return False
-        lower_speed.speed = -0.1
-        lower_speed_pub.publish(lower_speed)
-
-        rospy.sleep(move_time)
-
-        printb("up stop execution")
-        if self.is_in_peril:
-                return False
-        lower_speed.speed = 0
-        lower_speed_pub.publish(lower_speed)
-
-        rospy.sleep(move_time + 0.05)
+            rospy.sleep(move_time)
 
 
-        try:
-            call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
-                start_controllers=["{}_arm_controller".format(arm)],
-                stop_controllers=["{}_cartesian_motion_controller".format(arm)],
-                strictness=1, start_asap=False, timeout=0.0)
+            lower_speed.speed = 0
+            lower_speed_pub.publish(lower_speed)
 
-        except rospy.ServiceException as e:
-            print("Service call failed: %s" % e)
+            rospy.sleep(move_time)
 
-        print("##################################")
+            printb("grab execution")
+            if self.is_in_peril:
+                    return False
+            hand_msg.data[arm_index] = 1.6
+            hand_pub.publish(hand_msg)
+            printb("grabed")
+
+            rospy.sleep(1.5)
+
+            printb("up execution")
+            if self.is_in_peril:
+                    return False
+            lower_speed.speed = -0.1
+            lower_speed_pub.publish(lower_speed)
+
+            rospy.sleep(move_time)
+
+            printb("up stop execution")
+            if self.is_in_peril:
+                    return False
+            lower_speed.speed = 0
+            lower_speed_pub.publish(lower_speed)
+
+            rospy.sleep(move_time + 0.05)
+
+
+            try:
+                call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+                    start_controllers=["{}_arm_controller".format(arm)],
+                    stop_controllers=["{}_cartesian_motion_controller".format(arm)],
+                    strictness=1, start_asap=False, timeout=0.0)
+
+            except rospy.ServiceException as e:
+                print("Service call failed: %s" % e)
+
 
         rospy.sleep(0.5)
 
@@ -245,13 +244,13 @@ class MoveGroupHandler:
 
     def place(self):
 
-        target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_place")
-        plan = self.mv_right_arm.plan(target_joint_dict)
+        target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_down")
+        plan = self.whole_move_group.plan(target_joint_dict)
 
         printb("pre place execution")
         if self.is_in_peril:
                 return False
-        self.current_move_group.execute(plan, wait=True)
+        self.execute(plan, wait=True)
 
         if self.is_in_peril:
                 return False
@@ -265,15 +264,15 @@ class MoveGroupHandler:
         hand_enable_msg.data = False 
         hand_enable_pub.publish(hand_enable_msg)
 
-        rospy.sleep(2)
+        # rospy.sleep(2)
 
 
-        target_joint_dict = self.mv_right_arm.get_named_target_values("back_and_right_arm_start")
-        plan = self.mv_right_arm.plan(target_joint_dict)
+        target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_up")
+        plan = self.whole_move_group.plan(target_joint_dict)
         printb("post place execution")
         if self.is_in_peril:
                 return False
-        self.current_move_group.execute(plan, wait=True)
+        self.execute(plan, wait=True)
 
         return True
 
@@ -423,7 +422,7 @@ class Myrobot:
         res = self.mv_handler.approach(target_pose, c_eef_step, c_jump_threshold)
         return res
     
-    def pick(self, res_msg, contact, c_eef_step=0.01, c_jump_threshold=0.0):
+    def pick(self, res_msg, contact, down=True, c_eef_step=0.01, c_jump_threshold=0.0):
         # obj_position_point = target_pose.position
 
         # obj_position_vector = Vector3(obj_position_point.x, obj_position_point.y, obj_position_point.z)
@@ -451,7 +450,7 @@ class Myrobot:
         print(target_pose.position)
 
 
-        res = self.mv_handler.pick(self.arm_index, target_pose, access_distance, target_pressure, coc.z_direction[contact], c_eef_step, c_jump_threshold)
+        res = self.mv_handler.pick(self.arm_index, target_pose, access_distance, target_pressure, coc.z_direction[contact], down, c_eef_step, c_jump_threshold)
         return res
         
 
@@ -625,7 +624,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=False)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
@@ -676,7 +675,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=False)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
