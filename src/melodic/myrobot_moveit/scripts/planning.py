@@ -53,6 +53,10 @@ class MoveGroupHandler:
 
         self.mv_right_arm = MoveGroup("back_and_right_arm")
 
+        self.hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
+        self.hand_msg = Float64MultiArray()
+        self.hand_msg.data = [0.0, 0.0]
+
     def set_peril(self, msg):
         self.is_in_peril = msg.data
 
@@ -105,9 +109,6 @@ class MoveGroupHandler:
         hand_enable_msg.data = True 
         hand_enable_pub.publish(hand_enable_msg)
 
-        printr("target_pose : ")
-        printr(target_pose)
-
         waypoints = [target_pose]
         plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
         printc("plan_score : {}".format(plan_score))
@@ -134,11 +135,10 @@ class MoveGroupHandler:
         printb("hand adjustment execution")
         if self.is_in_peril:
                 return False
-        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-        hand_msg = Float64MultiArray()
-        hand_msg.data = [0.0, 0.0] # 右アームのみ
-        hand_msg.data[arm_index] = target_pressure # 右アームのみ
-        hand_pub.publish(hand_msg)
+        # hand_msg = Float64MultiArray()
+        # hand_msg.data = [0.0, 0.0] # 右アームのみ
+        self.hand_msg.data[arm_index] = target_pressure # 右アームのみ
+        self.hand_pub.publish(self.hand_msg)
 
         printc("target_pressure : {}".format(target_pressure))
 
@@ -204,8 +204,8 @@ class MoveGroupHandler:
             printb("grab execution")
             if self.is_in_peril:
                     return False
-            hand_msg.data[arm_index] = 1.6
-            hand_pub.publish(hand_msg)
+            self.hand_msg.data[arm_index] = 1.2
+            self.hand_pub.publish(self.hand_msg)
             printb("grabed")
 
             rospy.sleep(1.5)
@@ -237,7 +237,7 @@ class MoveGroupHandler:
                 print("Service call failed: %s" % e)
 
 
-        rospy.sleep(0.5)
+        # rospy.sleep(0.5)
 
         return True
 
@@ -254,10 +254,10 @@ class MoveGroupHandler:
 
         if self.is_in_peril:
                 return False
-        hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
-        hand_msg = Float64MultiArray()
-        hand_msg.data = [0, 0]
-        hand_pub.publish(hand_msg)
+        self.hand_msg.data = [0, 0]
+        self.hand_pub.publish(self.hand_msg)
+
+        rospy.sleep(1)
 
         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
         hand_enable_msg = Bool()
@@ -446,10 +446,6 @@ class Myrobot:
         target_pose = Pose(position=res_pose.position, orientation=orientation)
 
 
-        print("in PICK")
-        print(target_pose.position)
-
-
         res = self.mv_handler.pick(self.arm_index, target_pose, access_distance, target_pressure, coc.z_direction[contact], down, c_eef_step, c_jump_threshold)
         return res
         
@@ -582,10 +578,9 @@ if __name__ == "__main__":
 
     is_in_peril = False
 
+    myrobot.initialize_whole_pose()
     while not rospy.is_shutdown():
-        rospy.logerr("loop start")
-
-        myrobot.initialize_whole_pose()
+        printb("############ Loop start ############")
 
         myrobot.set_container()
 
@@ -598,6 +593,8 @@ if __name__ == "__main__":
                 printr("now robot is in peril...")
                 rospy.sleep(1)
                 continue
+
+            myrobot.initialize_whole_pose()
 
             rospy.sleep(0.1)
 
@@ -624,7 +621,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact, down=False)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=True)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
@@ -649,6 +646,8 @@ if __name__ == "__main__":
                 printr("now robot is in peril...")
                 rospy.sleep(1)
                 continue
+
+            myrobot.initialize_whole_pose()
 
             rospy.sleep(0.1)
 
@@ -675,7 +674,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact, down=False)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=True)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
@@ -697,7 +696,6 @@ if __name__ == "__main__":
             # myrobot.initialize_current_pose(cartesian_mode=True) # こっちだとスコアが低くて実行されなかった
             # myrobot.initialize_whole_pose()
             is_place_successed = myrobot.place()
-            print("place result : {}".format(is_place_successed))
         printy("is_place_successed : {}".format(is_place_successed))
 
 

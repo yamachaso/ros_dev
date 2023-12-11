@@ -159,6 +159,6 @@
     <!-- left camera -->
     <!-- TODO: update camera direction (needs image flip) -->
     <!-- <xacro:d435 prefix="${prefix_2}" parent="${prefix_2}_soft_hand_base_link" xyz="0 0 {0.145 + 0.04}" rpy="${radians(135)} ${radians(-90)} 0" camera_xyz="0 0 -0.0125" publish_pointcloud="true" /> -->
-    <xacro:d435 prefix="${prefix_2}" parent="${prefix_2}_hand_joint" xyz="0 0 0.012" rpy="0 0 0" camera_xyz="-0.0125 0 0.185" camera_rpy="0 ${radians(-90)} ${radians(180)}" publish_pointcloud="true" />
+    <xacro:d435 prefix="${prefix_2}" parent="${prefix_2}_hand_joint" xyz="0 0 0.012" rpy="0 0 ${radians(45)}" camera_xyz="-0.0125 0 0.185" camera_rpy="0 ${radians(-90)} ${radians(180)}" publish_pointcloud="true" />
     <!-- <xacro:d435 prefix="${prefix_2}" parent="${prefix_2}_hand_joint" xyz="0 0 0.012" rpy="0 0 ${radians(60)}" camera_xyz="-0.0125 0 0.185" camera_rpy="0 ${radians(-90)} ${radians(180)}" publish_pointcloud="true" /> -->
 </robot>

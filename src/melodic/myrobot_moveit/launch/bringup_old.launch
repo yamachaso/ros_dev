@@ -21,8 +21,7 @@
     <arg name="paused" default="true" />
     <arg name="gazebo_gui" default="true" />
     <arg name="urdf_path" value="$(find myrobot_description)/urdf/$(arg robot_name)_v2.urdf.xacro" />
-    <!-- <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" /> -->
-    <arg name="world_path" default="$(find myrobot_description)/world/cabbage_stage.world" />
+    <arg name="world_path" default="$(find myrobot_description)/world/container_cabbage_30_1_4.world" />
 
     <!-- for custom_denso_robot_control.launch -->
     <arg name="ip_address_cart" default="192.168.11.100" />
@@ -37,14 +36,13 @@
     <!-- for multiple_rs_camera.launch -->
     <arg name="use_camera" default="true" />
     <!-- left -->
-    <arg name="camera_serial_no_1" default="032622073208" />
-    <!-- <arg name="camera_serial_no_1" default="" /> -->
+    <!-- <arg name="camera_serial_no_1" default="032622073208" /> -->
+    <arg name="camera_serial_no_1" default="" />
     <!-- right -->
-    <arg name="camera_serial_no_2" default="915112070340" />
-    <!-- <arg name="camera_serial_no_2" default="032622073208" /> -->
+    <!-- <arg name="camera_serial_no_2" default="" /> -->
+    <arg name="camera_serial_no_2" default="032622073208" />
     <!-- body -->
     <arg name="camera_serial_no_3" default="047322070125" />
-    <!-- <arg name="camera_serial_no_3" default="047322070125" /> -->
 
     <!-- for planning.py -->
     <arg name="fps" default="1"/>
@@ -67,13 +65,9 @@
     <param name="used_camera" value="$(arg used_camera)"/>
     <rosparam param="sensors" subst_value="true">$(arg sensors)</rosparam>
 
-    <param name="left_image_topic" value="/$(arg robot_name)/left_camera/color/image_raw" />
-    <param name="left_depth_topic" value="/$(arg robot_name)/left_camera/aligned_depth_to_color/image_raw" />
-    <param name="left_points_topic" value="/$(arg robot_name)/left_camera/depth/color/points" />
-
-    <param name="right_image_topic" value="/$(arg robot_name)/right_camera/color/image_raw" />
-    <param name="right_depth_topic" value="/$(arg robot_name)/right_camera/aligned_depth_to_color/image_raw" />
-    <param name="right_points_topic" value="/$(arg robot_name)/right_camera/depth/color/points" />
+    <param name="image_topic" value="/$(arg robot_name)/$(arg used_camera)/color/image_raw" />
+    <param name="depth_topic" value="/$(arg robot_name)/$(arg used_camera)/aligned_depth_to_color/image_raw" />
+    <param name="points_topic" value="/$(arg robot_name)/$(arg used_camera)/depth/color/points" />
 
     <!-- remap -->
     <!-- move_groupが/joint_statesを読み取ってcurrent_stateを取得できるようにコメントアウト -->
@@ -154,10 +148,7 @@
 
     
     <group if="$(arg enable_auto_planning)">
-        <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/> -->
-        <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning_hand.py" output="screen"/> -->
         <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
-        <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client.py" output="screen"/>
     </group>
     <group unless="$(arg enable_auto_planning)">
         <node name="grasp_detection_client" pkg="myrobot_moveit" type="grasp_detection_client.py" />
@@ -167,13 +158,5 @@
     <node pkg="rosbag" type="record" name="rosbag_record_cam"
     args="record -a"
     if="$(arg record_all)" />
-
-
-    <include file="$(find timed_roslaunch)/timed_roslaunch.launch">
-        <arg name="time" value="3" />
-        <arg name="pkg" value="myrobot_moveit" />
-        <arg name="file" value="twist_to_pose.launch" />
-     </include>
-    <!-- <include file="$(find myrobot_moveit)/launch/twist_to_pose.launch" /> -->   
 
 </launch>

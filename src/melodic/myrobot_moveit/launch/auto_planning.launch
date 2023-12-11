@@ -1,0 +1,4 @@
+<launch>
+    <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
+    <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client.py" output="screen"/>
+</launch>

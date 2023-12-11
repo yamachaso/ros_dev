@@ -1,0 +1,33 @@
+<launch>
+    <!-- Override ip_address argument -->
+    <arg name="ip_address_left" default="192.168.11.102" />
+    <!-- Override robot_name argument -->
+    <arg name="robot_name" default="myrobot" />
+    <!-- Send format -->
+    <arg name="send_format" default="288" />
+    <!-- Recieve format -->
+    <arg name="recv_format" default="292" />
+    <!-- b-CAP Slave motion control cycle [millisecond] -->
+    <arg name="bcap_slave_control_cycle_msec" default="8" />
+
+    <arg name="node_start_delay" default="4.0" />  
+
+    <!-- following params to be wanted to be placed under the each node -->
+    <!-- Controller -->
+    <group ns="/$(arg robot_name)/left_arm">
+        <include file="$(find myrobot_moveit)/config/left_arm_config.launch.xml" >
+            <arg name="ip_address" value="$(arg ip_address_left)" />
+        </include>
+        <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" />
+    </group>
+
+    <rosparam file="$(find myrobot_moveit)/config/real_controllers.yaml" command="load" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm 
+        joint_state_controller left_arm_controller 
+    " />
+    <!-- ref: https://x.gd/OO1r2 -->
+    <node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/myrobot/left_arm" args="--namespace=/myrobot/left_arm --stopped
+          left_cartesian_motion_controller
+      " />
+
+</launch>
