@@ -208,12 +208,12 @@ class MoveGroupHandler:
             self.hand_pub.publish(self.hand_msg)
             printb("grabed")
 
-            rospy.sleep(1.5)
+            rospy.sleep(0.5)
 
             printb("up execution")
             if self.is_in_peril:
                     return False
-            lower_speed.speed = -0.1
+            lower_speed.speed = -0.2
             lower_speed_pub.publish(lower_speed)
 
             rospy.sleep(move_time)
@@ -224,7 +224,7 @@ class MoveGroupHandler:
             lower_speed.speed = 0
             lower_speed_pub.publish(lower_speed)
 
-            rospy.sleep(move_time + 0.05)
+            rospy.sleep(move_time / 2)
 
 
             try:
@@ -257,7 +257,7 @@ class MoveGroupHandler:
         self.hand_msg.data = [0, 0]
         self.hand_pub.publish(self.hand_msg)
 
-        rospy.sleep(1)
+        # rospy.sleep(1)
 
         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
         hand_enable_msg = Bool()
@@ -389,8 +389,8 @@ class Myrobot:
     #     )
     #     return constraint
 
-    def initialize_current_pose(self):
-        self.mv_handler.initialize_current_pose()
+    def initialize_current_pose(self, wait=True):
+        self.mv_handler.initialize_current_pose(wait=wait)
 
     def initialize_whole_pose(self):
         self.mv_handler.initialize_whole_pose()
@@ -589,7 +589,6 @@ if __name__ == "__main__":
                 rospy.sleep(1)
                 continue
 
-            myrobot.initialize_whole_pose()
 
             rospy.sleep(0.1)
 
@@ -629,7 +628,9 @@ if __name__ == "__main__":
                 obj_center = obj.center.uv
                 myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
 
+            myrobot.initialize_whole_pose()
 
+        # myrobot.initialize_current_pose(wait=False)
         myrobot.initialize_current_pose()
 
         # right arm (arm_index: 1)
@@ -642,7 +643,6 @@ if __name__ == "__main__":
                 rospy.sleep(1)
                 continue
 
-            myrobot.initialize_whole_pose()
 
             rospy.sleep(0.1)
 
@@ -682,6 +682,8 @@ if __name__ == "__main__":
                 obj_center = obj.center.uv
                 myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
  
+            myrobot.initialize_whole_pose()
+
         myrobot.initialize_current_pose()
 
         myrobot.delete_container()

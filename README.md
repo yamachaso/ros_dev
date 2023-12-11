@@ -21,7 +21,8 @@ roslaunch myrobot_moveit bringup_hand.launch used_camera:=right_camera sim:=fals
 - Gazebo:
 roslaunch detect bringup.launch
 - 実機:
-roslaunch detect bringup.launch el_insertion_th:=0 el_contact_th:=0 el_bw_depth_th:=0 used_camera:=right_camera 
+roslaunch detect ar_track_alver.launch
+roslaunch detect bringup.launch 
 
 subome radius 19 / 2 = 9.5mm
 
