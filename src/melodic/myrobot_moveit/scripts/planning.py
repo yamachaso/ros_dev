@@ -519,6 +519,7 @@ if __name__ == "__main__":
     right_image_topic = rospy.get_param("right_image_topic")
     right_depth_topic = rospy.get_param("right_depth_topic")
     right_points_topic = rospy.get_param("right_points_topic")
+    down = rospy.get_param("down")
     # sensors = rospy.get_param("sensors", default=("left_camera", "right_camera", "body_camera"))
 
     wait = rospy.get_param("wait_server", default=True)
@@ -543,14 +544,8 @@ if __name__ == "__main__":
     hand_radius_mm = rospy.get_param("hand_radius_mm", default="157.5")
     collision_radius = hand_radius_mm / 1000 * 0.5
 
-    print("waiting for visualize server")
-    vis_cli = SimpleActionClient("visualize_server_draw_target", VisualizeTargetAction)
-    vis_cli.wait_for_server()
-
     print("initializing pose...")
     myrobot.initialize_whole_pose()
-    print("getting around octomap...")
-    ### myrobot.get_around_octomap(values=[-30, 30, 0], sleep_time=1.0, is_degree=True, should_reset=True)
 
     print("stating detect flow...")
 
@@ -621,7 +616,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact, down=True)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=down)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
@@ -674,7 +669,7 @@ if __name__ == "__main__":
             if is_approach_successed and not myrobot.is_in_peril():
                 res = myrobot.calcurate_insertion()
                 if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact, down=True)
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=down)
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))

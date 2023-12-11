@@ -52,9 +52,9 @@
     <arg name="grasp_only" default="true" />
     <arg name="manual_wait" default="false" />
     <!-- auto octomap update -->
-    <!-- <arg name="sensors" default="[left_camera, right_camera, body_camera]"/> -->
+    <arg name="sensors" default="[left_camera, right_camera, body_camera]"/>
     <!-- <arg name="sensors" default="[left_camera, body_camera]"/> -->
-    <arg name="sensors" default="[right_camera, body_camera]"/>
+    <!-- <arg name="sensors" default="[right_camera, body_camera]"/> -->
 
 
     <param name="fps" value="$(arg fps)"/>

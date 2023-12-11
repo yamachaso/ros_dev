@@ -1,4 +1,8 @@
 <launch>
+    <arg name="down" default="true" />
+
+    <param name="down" value="$(arg down)" />
+
     <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
     <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client.py" output="screen"/>
 </launch>
