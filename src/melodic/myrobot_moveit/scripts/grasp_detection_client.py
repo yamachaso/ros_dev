@@ -40,7 +40,7 @@ class GraspDetectionClient:
         try:
             # points_msg = rospy.wait_for_message(self.points_topic, PointCloud2)
             self.request = GraspDetectionGoal(self.arm_index, img_msg, depth_msg, points_msg)
-            self.request2 = CalcurateInsertionGoal(img_msg, depth_msg, points_msg)
+            self.request2 = CalcurateInsertionGoal(self.arm_index, img_msg, depth_msg, points_msg)
         except Exception as err:
             rospy.logerr(err)
 
@@ -68,18 +68,22 @@ if __name__ == "__main__":
     rospy.init_node("grasp_detection_client", log_level=rospy.INFO)
 
     fps = rospy.get_param("fps")
-    image_topic = rospy.get_param("image_topic")
-    depth_topic = rospy.get_param("depth_topic")
-    points_topic = rospy.get_param("points_topic")
+    left_image_topic = rospy.get_param("left_image_topic")
+    left_depth_topic = rospy.get_param("left_depth_topic")
+    left_points_topic = rospy.get_param("left_points_topic")
+    right_image_topic = rospy.get_param("right_image_topic")
+    right_depth_topic = rospy.get_param("right_depth_topic")
+    right_points_topic = rospy.get_param("right_points_topic")
 
     cli = GraspDetectionClient(
+        arm_index=1,
         fps=fps,
-        image_topic=image_topic,
-        depth_topic=depth_topic,
-        points_topic=points_topic,
+        image_topic=left_image_topic,
+        depth_topic=left_depth_topic,
+        points_topic=left_points_topic,
     )
 
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(5)
 
     while not rospy.is_shutdown(): 
         cli.detect()

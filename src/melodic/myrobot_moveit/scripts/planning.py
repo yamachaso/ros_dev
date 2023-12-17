@@ -57,6 +57,18 @@ class MoveGroupHandler:
         self.hand_msg = Float64MultiArray()
         self.hand_msg.data = [0.0, 0.0]
 
+        self.hand_right_pub = rospy.Publisher('/hand_right_ref_pressure', Float64, queue_size=1)
+        self.hand_right_msg = Float64()
+        self.hand_right_msg.data = 0.0
+        
+        self.hand_left_pub = rospy.Publisher('/hand_left_ref_pressure', Float64, queue_size=1)
+        self.hand_left_msg = Float64()
+        self.hand_left_msg.data = 0.0
+
+        self.hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
+        self.hand_emergency_enable_msg = Bool()
+        self.hand_emergency_enable_msg.data = False
+
     def set_peril(self, msg):
         self.is_in_peril = msg.data
 
@@ -135,10 +147,16 @@ class MoveGroupHandler:
         printb("hand adjustment execution")
         if self.is_in_peril:
                 return False
-        # hand_msg = Float64MultiArray()
-        # hand_msg.data = [0.0, 0.0] # 右アームのみ
-        self.hand_msg.data[arm_index] = target_pressure # 右アームのみ
-        self.hand_pub.publish(self.hand_msg)
+        # self.hand_msg.data[arm_index] = target_pressure # 右アームのみ
+        # self.hand_pub.publish(self.hand_msg)
+
+        if arm_index == 0:
+            self.hand_left_msg.data = target_pressure
+            self.hand_left_pub.publish(self.hand_left_msg)
+        else:
+            self.hand_right_msg.data = target_pressure
+            self.hand_right_pub.publish(self.hand_right_msg)
+
 
         printc("target_pressure : {}".format(target_pressure))
 
@@ -156,6 +174,9 @@ class MoveGroupHandler:
 
         rospy.sleep(0.1)
 
+        # ハンドの曲げセンサによる例外処理有効化
+        self.hand_emergency_enable_msg.data = True
+        self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # 先に位置姿勢と取得して、その後コントローラーを切り替える
         # さもないと指令加速度過大になりがち
@@ -179,7 +200,8 @@ class MoveGroupHandler:
 
             # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
             # move_time = 1.35 - access_distance / 0.03 * 0.1
-            move_time = 1.35 - access_distance * 0.01 
+            # move_time = 1.35 - access_distance * 0.01 
+            move_time = 1.35 - access_distance * 0.01 / 2 
 
             printc("access_distance : {}".format(access_distance))
             printc("move_time : {}".format(move_time))
@@ -204,16 +226,24 @@ class MoveGroupHandler:
             printb("grab execution")
             if self.is_in_peril:
                     return False
-            self.hand_msg.data[arm_index] = 1.2
-            self.hand_pub.publish(self.hand_msg)
+            # self.hand_msg.data[arm_index] = 1.5
+            # self.hand_pub.publish(self.hand_msg)
+            if arm_index == 0:
+                self.hand_left_msg.data = 1.5
+                self.hand_left_pub.publish(self.hand_left_msg)
+            else:
+                self.hand_right_msg.data = 1.5
+                self.hand_right_pub.publish(self.hand_right_msg)
+
+
             printb("grabed")
 
-            rospy.sleep(0.5)
+            rospy.sleep(1.0)
 
             printb("up execution")
             if self.is_in_peril:
                     return False
-            lower_speed.speed = -0.2
+            lower_speed.speed = -0.1
             lower_speed_pub.publish(lower_speed)
 
             rospy.sleep(move_time)
@@ -224,7 +254,7 @@ class MoveGroupHandler:
             lower_speed.speed = 0
             lower_speed_pub.publish(lower_speed)
 
-            rospy.sleep(move_time / 2)
+            rospy.sleep(move_time)
 
 
             try:
@@ -236,6 +266,9 @@ class MoveGroupHandler:
             except rospy.ServiceException as e:
                 print("Service call failed: %s" % e)
 
+
+        self.hand_emergency_enable_msg.data = False
+        self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # rospy.sleep(0.5)
 
@@ -257,7 +290,7 @@ class MoveGroupHandler:
         self.hand_msg.data = [0, 0]
         self.hand_pub.publish(self.hand_msg)
 
-        # rospy.sleep(1)
+        rospy.sleep(1)
 
         hand_enable_pub = rospy.Publisher('/hand_enable', Bool, queue_size=1)
         hand_enable_msg = Bool()
@@ -283,7 +316,7 @@ class MoveGroupHandler:
 
 class ContactOrientationController:
     def __init__(self):
-        self.angle = 10
+        self.angle = 15
         self.contact_angles = {
             0 : [np.radians(0), np.radians(0), math.pi],
             1 : [np.radians(-30), np.radians(0), math.pi + np.radians(-self.angle)], 
@@ -570,10 +603,25 @@ if __name__ == "__main__":
     hand_enable_msg = Bool()
     hand_enable_msg.data = True 
     hand_enable_pub.publish(hand_enable_msg)
+    hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
+    hand_emergency_enable_msg = Bool()
+    hand_emergency_enable_msg.data = False
+    hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
+    hand_right_pub = rospy.Publisher('/hand_right_ref_pressure', Float64, queue_size=1)
+    hand_right_msg = Float64()
+    hand_right_msg.data = 0.0
+    hand_right_pub.publish(hand_right_msg)
+    hand_left_pub = rospy.Publisher('/hand_left_ref_pressure', Float64, queue_size=1)
+    hand_left_msg = Float64()
+    hand_left_msg.data = 0.0
+    hand_left_pub.publish(hand_left_msg)
 
     is_in_peril = False
 
     myrobot.initialize_whole_pose()
+
+    hand_pub.publish(hand_msg)
+
     while not rospy.is_shutdown():
         printb("############ Loop start ############")
 
@@ -582,56 +630,60 @@ if __name__ == "__main__":
         # left arm (arm_index: 0)
         myrobot.set_arm_index(0)
 
-        while True:
-            printp("=== left arm start ===")
-            if myrobot.is_in_peril():
-                printr("now robot is in peril...")
-                rospy.sleep(1)
-                continue
+        # while True:
+        #     printp("=== left arm start ===")
+        #     if myrobot.is_in_peril():
+        #         printr("now robot is in peril...")
+        #         rospy.sleep(1)
+        #         continue
 
 
-            rospy.sleep(0.1)
+        #     rospy.sleep(0.1)
 
-            obj = myrobot.detect()
+        #     obj = myrobot.detect()
 
-            printg("obj_cetner : {}".format(obj.center.uv)) 
-            printg("object score: {}".format(obj.score))
-            printg("contact : {}".format(obj.contact))
+        #     printg("obj_cetner : {}".format(obj.center.uv)) 
+        #     printg("object score: {}".format(obj.score))
+        #     printg("contact : {}".format(obj.contact))
 
-            is_detect_successed = False
+        #     is_detect_successed = False
             
-            # 右半分にあるキャベツは無視する
-            if obj.center_pose.pose.position.y >= 0:
-                is_detect_successed = True 
+        #     # 右半分にあるキャベツは無視する
+        #     printp("x value : {}".format(obj.center_pose.pose.position.x))
+        #     if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
+        #         is_detect_successed = True 
 
-            # approach 
-            is_approach_successed = False
-            if is_detect_successed and not myrobot.is_in_peril():
-                is_approach_successed = myrobot.approach(obj)
-            printy("is_approach_successed : {}".format(is_approach_successed))
+        #     printy("is_detect_successed : {}".format(is_detect_successed))
+        #     # approach 
+        #     is_approach_successed = False
+        #     if is_detect_successed and not myrobot.is_in_peril():
+        #         is_approach_successed = myrobot.approach(obj)
+        #     printy("is_approach_successed : {}".format(is_approach_successed))
 
-            # pick
-            is_pick_successed = False
-            if is_approach_successed and not myrobot.is_in_peril():
-                res = myrobot.calcurate_insertion()
-                if res.success and not myrobot.is_in_peril():
-                    is_pick_successed = myrobot.pick(res, obj.contact, down=down)
-                else:
-                    printr("no good cabbage...")
-            printy("is_pick_successed : {}".format(is_pick_successed))
+        #     # pick
+        #     is_pick_successed = False
+        #     if is_approach_successed and not myrobot.is_in_peril():
+        #         res = myrobot.calcurate_insertion()
+        #         if res.success and not myrobot.is_in_peril():
+        #             is_pick_successed = myrobot.pick(res, obj.contact, down=down)
+        #         else:
+        #             printr("no good cabbage...")
+        #     printy("is_pick_successed : {}".format(is_pick_successed))
                 
-            if is_pick_successed:
-                printp("=== left arm end ===")
-                break
+        #     if is_pick_successed:
+        #         printp("=== left arm end ===")
+        #         break
 
-            if not is_approach_successed or not is_pick_successed:
-                obj_center = obj.center.uv
-                myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+        #     if not is_approach_successed or not is_pick_successed:
+        #         obj_center = obj.center.uv
+        #         myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+        #     else:
+        #         myrobot.add_exclusion_cabbage(-1, -1)
 
-            myrobot.initialize_whole_pose()
+        #     myrobot.initialize_whole_pose()
 
-        # myrobot.initialize_current_pose(wait=False)
-        myrobot.initialize_current_pose()
+        # # myrobot.initialize_current_pose(wait=False)
+        # myrobot.initialize_current_pose()
 
         # right arm (arm_index: 1)
         myrobot.set_arm_index(1)
@@ -655,7 +707,7 @@ if __name__ == "__main__":
             is_detect_successed = False
             
             # 左半分にあるキャベツは無視する
-            if obj.center_pose.pose.position.y <= 0:
+            if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
                 is_detect_successed = True 
 
             # approach 
@@ -681,6 +733,8 @@ if __name__ == "__main__":
             if not is_approach_successed or not is_pick_successed:
                 obj_center = obj.center.uv
                 myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+            else:
+                myrobot.add_exclusion_cabbage(-1, -1)
  
             myrobot.initialize_whole_pose()
 
