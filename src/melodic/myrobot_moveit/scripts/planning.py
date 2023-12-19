@@ -201,7 +201,9 @@ class MoveGroupHandler:
             # 把持時のaccess_distanceとはハンドとキャベツの距離(m単位)
             # move_time = 1.35 - access_distance / 0.03 * 0.1
             # move_time = 1.35 - access_distance * 0.01 
-            move_time = 1.35 - access_distance * 0.01 / 2 
+            # move_time = 1.35 - access_distance * 0.01 / 2 
+            # move_time = 1.35 - access_distance * 0.01 / 1.2 
+            move_time = 1.2 - access_distance * 0.01 / 1.2 
 
             printc("access_distance : {}".format(access_distance))
             printc("move_time : {}".format(move_time))
@@ -267,8 +269,8 @@ class MoveGroupHandler:
                 print("Service call failed: %s" % e)
 
 
-        self.hand_emergency_enable_msg.data = False
-        self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
+        # self.hand_emergency_enable_msg.data = False
+        # self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # rospy.sleep(0.5)
 
@@ -500,6 +502,10 @@ class Myrobot:
     def add_exclusion_cabbage(self, u, v):
          return self.el_cli.add(self.arm_index, u, v)
 
+
+    def clear_exclusion_cabbage(self):
+         return self.el_cli.clear(self.arm_index)
+
     def set_container(self):
 
         res = self.cp_cli.get()
@@ -630,60 +636,67 @@ if __name__ == "__main__":
         # left arm (arm_index: 0)
         myrobot.set_arm_index(0)
 
-        # while True:
-        #     printp("=== left arm start ===")
-        #     if myrobot.is_in_peril():
-        #         printr("now robot is in peril...")
-        #         rospy.sleep(1)
-        #         continue
+        while True:
+            printp("=== left arm start ===")
+            if myrobot.is_in_peril():
+                printr("now robot is in peril...")
+                rospy.sleep(1)
+                continue
 
 
-        #     rospy.sleep(0.1)
+            rospy.sleep(0.1)
 
-        #     obj = myrobot.detect()
+            obj = myrobot.detect()
 
-        #     printg("obj_cetner : {}".format(obj.center.uv)) 
-        #     printg("object score: {}".format(obj.score))
-        #     printg("contact : {}".format(obj.contact))
+            printg("obj_cetner : {}".format(obj.center.uv)) 
+            printg("object score: {}".format(obj.score))
+            printg("contact : {}".format(obj.contact))
 
-        #     is_detect_successed = False
+            is_detect_successed = False
             
-        #     # 右半分にあるキャベツは無視する
-        #     printp("x value : {}".format(obj.center_pose.pose.position.x))
-        #     if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
-        #         is_detect_successed = True 
+            # 右半分にあるキャベツは無視する
+            printp("x value : {}".format(obj.center_pose.pose.position.x))
+            if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
+                is_detect_successed = True
+            # 角にあるキャベツは無視 / 一時的な対応にしたい
+            if obj.contact in [3, 6, 12, 9]:
+                is_detect_successed = False 
 
-        #     printy("is_detect_successed : {}".format(is_detect_successed))
-        #     # approach 
-        #     is_approach_successed = False
-        #     if is_detect_successed and not myrobot.is_in_peril():
-        #         is_approach_successed = myrobot.approach(obj)
-        #     printy("is_approach_successed : {}".format(is_approach_successed))
+            printy("is_detect_successed : {}".format(is_detect_successed))
+            # approach 
+            is_approach_successed = False
+            if is_detect_successed and not myrobot.is_in_peril():
+                is_approach_successed = myrobot.approach(obj)
+            printy("is_approach_successed : {}".format(is_approach_successed))
 
-        #     # pick
-        #     is_pick_successed = False
-        #     if is_approach_successed and not myrobot.is_in_peril():
-        #         res = myrobot.calcurate_insertion()
-        #         if res.success and not myrobot.is_in_peril():
-        #             is_pick_successed = myrobot.pick(res, obj.contact, down=down)
-        #         else:
-        #             printr("no good cabbage...")
-        #     printy("is_pick_successed : {}".format(is_pick_successed))
+            # pick
+            is_pick_successed = False
+            if is_approach_successed and not myrobot.is_in_peril():
+                res = myrobot.calcurate_insertion()
+                if res.success and not myrobot.is_in_peril():
+                    is_pick_successed = myrobot.pick(res, obj.contact, down=down)
+                else:
+                    printr("no good cabbage...")
+            printy("is_pick_successed : {}".format(is_pick_successed))
+
+            hand_emergency_enable_msg.data = False
+            hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
                 
-        #     if is_pick_successed:
-        #         printp("=== left arm end ===")
-        #         break
+            if is_pick_successed:
+                printp("=== left arm end ===")
+                break
 
-        #     if not is_approach_successed or not is_pick_successed:
-        #         obj_center = obj.center.uv
-        #         myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
-        #     else:
-        #         myrobot.add_exclusion_cabbage(-1, -1)
+            if not is_approach_successed or not is_pick_successed:
+                obj_center = obj.center.uv
+                myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+            else:
+                myrobot.add_exclusion_cabbage(-1, -1)
 
-        #     myrobot.initialize_whole_pose()
+            myrobot.initialize_whole_pose()
 
-        # # myrobot.initialize_current_pose(wait=False)
-        # myrobot.initialize_current_pose()
+        # myrobot.initialize_current_pose(wait=False)
+        myrobot.initialize_current_pose()
+        myrobot.clear_exclusion_cabbage()
 
         # right arm (arm_index: 1)
         myrobot.set_arm_index(1)
@@ -709,6 +722,9 @@ if __name__ == "__main__":
             # 左半分にあるキャベツは無視する
             if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
                 is_detect_successed = True 
+            # 角にあるキャベツは無視 / 一時的な対応にしたい
+            if obj.contact in [3, 6, 12, 9]:
+                is_detect_successed = False 
 
             # approach 
             is_approach_successed = False
@@ -725,7 +741,10 @@ if __name__ == "__main__":
                 else:
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
-                
+
+            hand_emergency_enable_msg.data = False
+            hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
+
             if is_pick_successed:
                 printp("=== right arm end ===")
                 break
@@ -739,6 +758,7 @@ if __name__ == "__main__":
             myrobot.initialize_whole_pose()
 
         myrobot.initialize_current_pose()
+        myrobot.clear_exclusion_cabbage()
 
         myrobot.delete_container()
 

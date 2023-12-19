@@ -76,8 +76,12 @@ if __name__ == "__main__":
     right_points_topic = rospy.get_param("right_points_topic")
 
     cli = GraspDetectionClient(
-        arm_index=1,
+        # arm_index=1,
+        arm_index=0,
         fps=fps,
+        # image_topic=right_image_topic,
+        # depth_topic=right_depth_topic,
+        # points_topic=right_points_topic,
         image_topic=left_image_topic,
         depth_topic=left_depth_topic,
         points_topic=left_points_topic,
