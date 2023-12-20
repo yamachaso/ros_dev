@@ -3,6 +3,8 @@
 
     <param name="down" value="$(arg down)" />
 
-    <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
-    <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client.py" output="screen"/>
+    <!-- <node name="auto_planner" pkg="myrobot_moveit" type="planning.py" output="screen"/>
+    <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client.py" output="screen"/> -->
+    <node name="auto_planner" pkg="myrobot_moveit" type="planning_only_moveit.py" output="screen"/>
+    <node name="emergency_node" pkg="myrobot_moveit" type="emergency_client_only_moveit.py" output="screen"/>
 </launch>

@@ -28,6 +28,8 @@ class cmdVelPublisher:
 
         self.current_speed = 0.0
 
+        self.in_peril = False
+
         self.pub_right = rospy.Publisher("/cmd_vel/right", Twist, queue_size=1)
         self.pub_left = rospy.Publisher("/cmd_vel/left", Twist, queue_size=1)
         self.sub = rospy.Subscriber("/target_hand_lower_speed", HandSpeedDirection, self.setVelocity_cb)
@@ -36,7 +38,10 @@ class cmdVelPublisher:
 
 
     def timerCallback(self, event):
-        if self.target_speed - self.last_target > 0.0:
+        if self.in_peril:
+            self.twist = Twist()
+            print("peril peril")
+        elif self.target_speed - self.last_target > 0.0:
             self.current_speed += 0.01
             # self.current_speed += 0.005
             self.current_speed = min(self.current_speed, self.target_speed)
@@ -59,7 +64,11 @@ class cmdVelPublisher:
         self.last_target = self.target_speed
         self.target_speed = msg.speed
         self.direction = msg.direction
-        
+        if self.direction.x == 100: # for emergency
+            self.in_peril = True
+            self.target_speed = 0.0
+        else:
+            self.in_peril = False 
 
 
 if __name__ == '__main__':

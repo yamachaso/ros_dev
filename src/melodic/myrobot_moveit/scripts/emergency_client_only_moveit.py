@@ -73,54 +73,12 @@ class EmergencyClient:
         else:
             self.hand_right_pub.publish(hand_msg)
 
-        # call("/myrobot/controller_manager/switch_controller", SwitchController,
-        call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
-            start_controllers=[],
-            stop_controllers=["{}_cartesian_motion_controller".format(arm), "{}_arm_controller".format(arm)],
-            strictness=1, start_asap=False, timeout=0.0)
 
-        # todome kaihi
-        lower_speed = HandSpeedDirection()
-        lower_speed.speed = 0
-        lower_speed.direction = Vector3(x = 0.0, y = 0.0, z = -1.0)
-        self.lower_speed_pub.publish(lower_speed)
-        rospy.sleep(0.5)
-
-
-        startup_pub = rospy.Publisher('/startup/{}'.format(arm), Empty, queue_size=1)
-        empty_msg = Empty()
-        startup_pub.publish(empty_msg)
-
-        # call("/myrobot/controller_manager/switch_controller", SwitchController,
-        call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
-            start_controllers=["{}_cartesian_motion_controller".format(arm)],
-            stop_controllers=[""],
-            strictness=1, start_asap=True, timeout=5.0)
-
-        move_time = 1
-        lower_speed.speed = -0.1
-        lower_speed.direction = Vector3(x = 0.0, y = 0.0, z = -1.0)
-        self.lower_speed_pub.publish(lower_speed)
-
-        rospy.sleep(move_time)
-
-        lower_speed.speed = 0
-        self.lower_speed_pub.publish(lower_speed)
-
-        rospy.sleep(move_time)
-
-        printb("up finished")
-
-        call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
-            start_controllers=["{}_arm_controller".format(arm)],
-            stop_controllers=["{}_cartesian_motion_controller".format(arm)],
-            strictness=1, start_asap=True, timeout=5.0)
-        
-        rospy.sleep(0.1)
+        rospy.sleep(3)
 
         mv_arm = MoveGroup("{}_arm".format(arm))
         # mv_arm.set_max_velocity_scaling_factor(0.3)
-        mv_arm.set_max_acceleration_scaling_factor(0.7)
+        mv_arm.set_max_acceleration_scaling_factor(0.3)
         target_name = "{}_arm_start".format(arm)
         target_joint_dict = mv_arm.get_named_target_values(target_name)
         plan = mv_arm.plan(target_joint_dict)
