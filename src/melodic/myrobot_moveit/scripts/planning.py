@@ -679,9 +679,9 @@ if __name__ == "__main__":
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
 
-            hand_emergency_enable_msg.data = False
-            hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
-                
+            if myrobot.is_in_peril():
+                is_pick_successed = False
+
             if is_pick_successed:
                 printp("=== left arm end ===")
                 break
@@ -696,6 +696,8 @@ if __name__ == "__main__":
 
         # myrobot.initialize_current_pose(wait=False)
         myrobot.initialize_current_pose()
+        hand_emergency_enable_msg.data = False
+        hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 
         # right arm (arm_index: 1)
@@ -742,8 +744,8 @@ if __name__ == "__main__":
                     printr("no good cabbage...")
             printy("is_pick_successed : {}".format(is_pick_successed))
 
-            hand_emergency_enable_msg.data = False
-            hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
+            if myrobot.is_in_peril():
+                is_pick_successed = False
 
             if is_pick_successed:
                 printp("=== right arm end ===")
@@ -758,6 +760,8 @@ if __name__ == "__main__":
             myrobot.initialize_whole_pose()
 
         myrobot.initialize_current_pose()
+        hand_emergency_enable_msg.data = False
+        hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 
         myrobot.delete_container()
