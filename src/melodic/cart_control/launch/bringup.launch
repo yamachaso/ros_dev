@@ -23,4 +23,6 @@
         /cart/left_left_wheel_controller
     " />
 
+    <node name="cart_backandforth_server" pkg="cart_control" type="cart_backandforth_server.py" />
+
 </launch>

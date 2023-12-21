@@ -23,28 +23,47 @@ from planning import MoveGroup
 class EmergencyClient:
     def __init__(self):
         self.pub = rospy.Publisher("/is_in_peril", Bool, queue_size=10)
-        self.sub = rospy.Subscriber("/hand_emergency_enable", Bool, self.accept_emergency)
+        self.sub = rospy.Subscriber("/hand_emergency_enable", Int64MultiArray, self.accept_emergency)
         self.sub = rospy.Subscriber("/hand_emergency", Int64MultiArray, self.stop)
+        self.sub = rospy.Subscriber("/skip_initialize", Bool, self.skip)
         self.lower_speed_pub = rospy.Publisher('/target_hand_lower_speed', HandSpeedDirection, queue_size=1)
         self.hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         self.hand_left_pub = rospy.Publisher('/hand_left_ref_pressure', Float64, queue_size=1)
         self.hand_right_pub = rospy.Publisher('/hand_right_ref_pressure', Float64, queue_size=1)
  
 
-        self.hand_emergency_enable = False
+        self.hand_emergency_enable_left = False
+        self.hand_emergency_enable_right = False
         self.in_process = False
+
+        self.skip_initialize = False
 
         self.hand_emergency_value = np.array([0, 0])
 
+    def skip(self, msg):
+        self.skip_initialize = msg.data
+
     def accept_emergency(self, msg):
-        self.hand_emergency_enable = msg.data
+        if np.array(msg.data)[0] == 1:
+            self.hand_emergency_enable_left = True
+        elif np.array(msg.data)[0] == 0:
+            self.hand_emergency_enable_left = False
+        if np.array(msg.data)[1] == 1:
+            self.hand_emergency_enable_right = True
+        elif np.array(msg.data)[1] == 0:
+            self.hand_emergency_enable_right = False
 
     def stop(self, msg):
         printr("Emergency called!!")
         print(msg)
-        if self.in_process or not self.hand_emergency_enable:
+        if self.in_process:
             return
         self.hand_emergency_value = np.array(msg.data)
+        if self.hand_emergency_value[0] == 1 and not self.hand_emergency_enable_left:
+            return
+        if self.hand_emergency_value[1] == 1 and not self.hand_emergency_enable_right:
+            return
+
         if self.hand_emergency_value.sum() != 0:
             self.in_process = True
 
@@ -73,12 +92,27 @@ class EmergencyClient:
         else:
             self.hand_right_pub.publish(hand_msg)
 
+        if self.skip_initialize:
+            self.in_process = False
+            return
 
-        rospy.sleep(3)
+        call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+            start_controllers=[],
+            stop_controllers=["{}_cartesian_motion_controller".format(arm), "{}_arm_controller".format(arm)],
+            strictness=1, start_asap=False, timeout=0.0)
+
+        rospy.sleep(0.1)
+
+        call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
+            start_controllers=["{}_arm_controller".format(arm)],
+            stop_controllers=[""],
+            strictness=1, start_asap=True, timeout=5.0)
+        
+        rospy.sleep(0.1)
 
         mv_arm = MoveGroup("{}_arm".format(arm))
-        # mv_arm.set_max_velocity_scaling_factor(0.3)
-        mv_arm.set_max_acceleration_scaling_factor(0.3)
+        mv_arm.set_max_velocity_scaling_factor(0.5)
+        mv_arm.set_max_acceleration_scaling_factor(0.5)
         target_name = "{}_arm_start".format(arm)
         target_joint_dict = mv_arm.get_named_target_values(target_name)
         plan = mv_arm.plan(target_joint_dict)

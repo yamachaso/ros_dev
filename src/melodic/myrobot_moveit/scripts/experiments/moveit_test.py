@@ -18,24 +18,28 @@ def main():
     rospy.init_node("pose_planner")
 
     # eef複数含む場合には、
-    move_group = moveit_commander.MoveGroupCommander("back_and_left_arm") # for open_manipulator
-    # move_group = moveit_commander.MoveGroupCommander("left_arm") # for open_manipulator
-    print("eef", move_group.get_end_effector_link())
-    move_group.set_end_effector_link('left_soft_hand_tip')
+    # move_group = moveit_commander.MoveGroupCommander("back_and_arms") # for open_manipulator
+    # move_group = moveit_commander.MoveGroupCommander("right_arm") # for open_manipulator
+    move_group = moveit_commander.MoveGroupCommander("right_arm") # for open_manipulator
+    # print("eef", move_group.get_end_effector_link())
+    # move_group.set_end_effector_link('left_soft_hand_tip')
     # ref: https://answers.ros.org/question/334902/moveit-control-gripper-instead-of-panda_link8-eff/
     # move_group.set_end_effector_link("right_panda_hand_tip")
     move_group.set_planner_id('RRTConnectkConfigDefault')
     pose = move_group.get_current_pose()
+    print(pose)
     # print(pose)
-    # print(pose)
-    # pose.pose.position.z -= 0.1
+    pose.pose.position.x -= 0.05
     # # move_group.set_position_target([1.5, -0.2, 0.2], end_effector_link="right_soft_hand_tip")
     # move_group.set_pose_target(pose, end_effector_link="right_soft_hand_tip")
+    move_group.set_pose_target(pose)
 
     # # 追記：実行可能かの確認
-    # plan = move_group.plan()
-    # if not plan.joint_trajectory.points:
-    #     rospy.logerr("No motion plan found")
+    plan = move_group.plan()
+    if not plan.joint_trajectory.points:
+        rospy.logerr("No motion plan found")
+    move_group.execute(plan, wait=True)
+
 
     # # モーションプランの計画と実行
     # move_group.go(wait=True)

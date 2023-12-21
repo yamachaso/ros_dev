@@ -31,8 +31,10 @@ if __name__ == "__main__":
     rospy.init_node('cart_backandforth_client')
 
     cli = CartBackandforthServerClient()
+    
 
-    cli.forth()
+    # cli.forth()
+    cli.back()
 
     rospy.spin()
   

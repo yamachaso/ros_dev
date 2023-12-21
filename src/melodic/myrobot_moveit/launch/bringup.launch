@@ -39,11 +39,12 @@
     <arg name="camera_serial_no_1" default="032622073208" />
     <!-- <arg name="camera_serial_no_1" default="" /> -->
     <!-- right -->
-    <arg name="camera_serial_no_2" default="915112070340" />
-    <!-- <arg name="camera_serial_no_2" default="032622073208" /> -->
+    <!-- <arg name="camera_serial_no_2" default="915112070340" /> -->
+    <arg name="camera_serial_no_2" default="915112070378" />
+    <!-- <arg name="camera_serial_no_2" default="" /> -->
     <!-- body -->
     <arg name="camera_serial_no_3" default="047322070125" />
-    <!-- <arg name="camera_serial_no_3" default="047322070125" /> -->
+    <!-- <arg name="camera_serial_no_3" default="" /> -->
 
     <!-- for planning.py -->
     <arg name="fps" default="1"/>

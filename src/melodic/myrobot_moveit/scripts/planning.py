@@ -19,7 +19,7 @@ from moveit_msgs.msg import Constraints
 from moveit_msgs.msg import Grasp as BaseGrasp
 from moveit_msgs.msg import OrientationConstraint, RobotState
 from sensor_msgs.msg import Image, JointState
-from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header
+from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header, Int64MultiArray
 from tf.transformations import quaternion_from_euler
 from trajectory_msgs.msg import JointTrajectoryPoint
 from exclusion_list_client import ExclusionListClient
@@ -65,9 +65,9 @@ class MoveGroupHandler:
         self.hand_left_msg = Float64()
         self.hand_left_msg.data = 0.0
 
-        self.hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
-        self.hand_emergency_enable_msg = Bool()
-        self.hand_emergency_enable_msg.data = False
+        self.hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Int64MultiArray, queue_size=1)
+        self.hand_emergency_enable_msg = Int64MultiArray()
+        self.hand_emergency_enable_msg.data = [0, 0]
 
     def set_peril(self, msg):
         self.is_in_peril = msg.data
@@ -175,7 +175,8 @@ class MoveGroupHandler:
         rospy.sleep(0.1)
 
         # ハンドの曲げセンサによる例外処理有効化
-        self.hand_emergency_enable_msg.data = True
+        self.hand_emergency_enable_msg.data = [0, 0]
+        self.hand_emergency_enable_msg.data[arm_index] = 1
         self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # 先に位置姿勢と取得して、その後コントローラーを切り替える
@@ -269,8 +270,6 @@ class MoveGroupHandler:
                 print("Service call failed: %s" % e)
 
 
-        # self.hand_emergency_enable_msg.data = False
-        # self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # rospy.sleep(0.5)
 
@@ -609,9 +608,9 @@ if __name__ == "__main__":
     hand_enable_msg = Bool()
     hand_enable_msg.data = True 
     hand_enable_pub.publish(hand_enable_msg)
-    hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
-    hand_emergency_enable_msg = Bool()
-    hand_emergency_enable_msg.data = False
+    hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Int64MultiArray, queue_size=1)
+    hand_emergency_enable_msg = Int64MultiArray
+    hand_emergency_enable_msg.data = [0, 0]
     hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
     hand_right_pub = rospy.Publisher('/hand_right_ref_pressure', Float64, queue_size=1)
     hand_right_msg = Float64()
@@ -683,8 +682,10 @@ if __name__ == "__main__":
                 is_pick_successed = False
 
             if is_pick_successed:
-                printp("=== left arm end ===")
-                break
+                myrobot.initialize_current_pose()
+                if not myrobot.is_in_peril:
+                    printp("=== left arm end ===")
+                    break
 
             if not is_approach_successed or not is_pick_successed:
                 obj_center = obj.center.uv
@@ -696,7 +697,7 @@ if __name__ == "__main__":
 
         # myrobot.initialize_current_pose(wait=False)
         myrobot.initialize_current_pose()
-        hand_emergency_enable_msg.data = False
+        hand_emergency_enable_msg.data = [0, 0]
         hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 
@@ -748,8 +749,10 @@ if __name__ == "__main__":
                 is_pick_successed = False
 
             if is_pick_successed:
-                printp("=== right arm end ===")
-                break
+                myrobot.initialize_current_pose()
+                if not myrobot.is_in_peril:
+                    printp("=== right arm end ===")
+                    break
 
             if not is_approach_successed or not is_pick_successed:
                 obj_center = obj.center.uv
@@ -759,8 +762,7 @@ if __name__ == "__main__":
  
             myrobot.initialize_whole_pose()
 
-        myrobot.initialize_current_pose()
-        hand_emergency_enable_msg.data = False
+        hand_emergency_enable_msg.data = [0, 0]
         hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 

@@ -19,10 +19,11 @@ from moveit_msgs.msg import Constraints
 from moveit_msgs.msg import Grasp as BaseGrasp
 from moveit_msgs.msg import OrientationConstraint, RobotState
 from sensor_msgs.msg import Image, JointState
-from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header
+from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, Header, Int64MultiArray
 from tf.transformations import quaternion_from_euler
 from trajectory_msgs.msg import JointTrajectoryPoint
 from exclusion_list_client import ExclusionListClient
+from cart_backandforth_client import CartBackandforthServerClient
 
 class MoveGroup(mc.MoveGroupCommander):
     def __init__(self, name, scaling_factor=1, planning_time=5):
@@ -65,9 +66,11 @@ class MoveGroupHandler:
         self.hand_left_msg = Float64()
         self.hand_left_msg.data = 0.0
 
-        self.hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
-        self.hand_emergency_enable_msg = Bool()
-        self.hand_emergency_enable_msg.data = False
+        self.hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Int64MultiArray, queue_size=1)
+        self.hand_emergency_enable_msg = Int64MultiArray()
+        self.hand_emergency_enable_msg.data = [0, 0]
+
+        self.cart_state = 'forth'
 
     def set_peril(self, msg):
         self.is_in_peril = msg.data
@@ -82,14 +85,20 @@ class MoveGroupHandler:
 
     def initialize_current_pose(self, wait=True):
         group_name = self.get_current_name()
-        target_name = "{}_start".format(group_name)
+        if self.cart_state == 'forth':
+            target_name = "{}_start_forth".format(group_name)
+        else:
+            target_name = "{}_start_back".format(group_name)
         target_joint_dict = self.current_move_group.get_named_target_values(target_name)
         plan = self.current_move_group.plan(target_joint_dict)
         self.current_move_group.execute(plan, wait=wait)
 
-    def initialize_whole_pose(self, wait=True,):
+    def initialize_whole_pose(self, wait=True):
         # target_name = "{}_default".format(self.whole_name)
-        target_name = "{}_start".format(self.whole_name)
+        if self.cart_state == 'forth':
+            target_name = "{}_start_forth".format(self.whole_name)
+        else:
+            target_name = "{}_start_back".format(self.whole_name)
         target_joint_dict = self.whole_move_group.get_named_target_values(target_name)
         plan = self.whole_move_group.plan(target_joint_dict)
         self.whole_move_group.execute(plan, wait=wait)
@@ -175,14 +184,16 @@ class MoveGroupHandler:
         rospy.sleep(0.1)
 
         # ハンドの曲げセンサによる例外処理有効化
-        self.hand_emergency_enable_msg.data = True
+        self.hand_emergency_enable_msg.data = [0, 0]
+        self.hand_emergency_enable_msg.data[arm_index] = 1
         self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
 
         if self.is_in_peril:
                 return False
         if down:
-            target_pose.position.z -= 0.1
+            print("access : ", access_distance)
+            target_pose.position.z -= (0.12 - access_distance / 1000)
             waypoints = [target_pose]
             plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
             print("pose score", plan_score)
@@ -210,6 +221,8 @@ class MoveGroupHandler:
 
             printb("grabed")
 
+            rospy.sleep(1)
+
             target_pose.position.z += 0.1
             waypoints = [target_pose]
             plan, plan_score = self.current_move_group.compute_cartesian_path(waypoints, c_eef_step, c_jump_threshold)
@@ -222,8 +235,6 @@ class MoveGroupHandler:
             if self.is_in_peril:
                     return False
             self.execute(plan, wait=True)
-        # self.hand_emergency_enable_msg.data = False
-        # self.hand_emergency_enable_pub.publish(self.hand_emergency_enable_msg)
 
         # rospy.sleep(0.5)
 
@@ -232,7 +243,11 @@ class MoveGroupHandler:
 
     def place(self):
 
-        target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_down")
+        if self.cart_state == 'forth':
+            target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_down2")
+        else:
+            target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_down5")
+        
         plan = self.whole_move_group.plan(target_joint_dict)
 
         printb("pre place execution")
@@ -254,8 +269,10 @@ class MoveGroupHandler:
 
         # rospy.sleep(2)
 
-
-        target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_up")
+        if self.cart_state == 'forth':
+            target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_up2")
+        else:
+            target_joint_dict = self.whole_move_group.get_named_target_values("back_and_arms_place_up5")
         plan = self.whole_move_group.plan(target_joint_dict)
         printb("post place execution")
         if self.is_in_peril:
@@ -350,8 +367,14 @@ class Myrobot:
 
         self.el_cli = ExclusionListClient()
 
+    def set_cart_state(self, cart_state):
+        self.mv_handler.cart_state = cart_state
+
     def is_in_peril(self):
         return self.mv_handler.is_in_peril
+    
+    def set_peril(self, data):
+        self.mv_handler.is_in_peril = data
     
     def set_robot_status_good(self):
         self.mv_handler.is_in_peril = False
@@ -562,9 +585,9 @@ if __name__ == "__main__":
     hand_enable_msg = Bool()
     hand_enable_msg.data = True 
     hand_enable_pub.publish(hand_enable_msg)
-    hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Bool, queue_size=1)
-    hand_emergency_enable_msg = Bool()
-    hand_emergency_enable_msg.data = False
+    hand_emergency_enable_pub = rospy.Publisher('/hand_emergency_enable', Int64MultiArray, queue_size=1)
+    hand_emergency_enable_msg = Int64MultiArray()
+    hand_emergency_enable_msg.data = [0, 0]
     hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
     hand_right_pub = rospy.Publisher('/hand_right_ref_pressure', Float64, queue_size=1)
     hand_right_msg = Float64()
@@ -574,6 +597,10 @@ if __name__ == "__main__":
     hand_left_msg = Float64()
     hand_left_msg.data = 0.0
     hand_left_pub.publish(hand_left_msg)
+    skip_initialize_pub = rospy.Publisher("/skip_initialize", Bool, queue_size=10)
+    skip_initialize_msg = Bool()
+    skip_initialize_msg.data = False
+    skip_initialize_pub.publish(skip_initialize_msg)
 
     is_in_peril = False
 
@@ -581,7 +608,25 @@ if __name__ == "__main__":
 
     hand_pub.publish(hand_msg)
 
+    cart_count = 0
+    cart_state = 'forth'
+    cart_cli =  CartBackandforthServerClient()
+
     while not rospy.is_shutdown():
+        if cart_count % 2 == 0:
+            myrobot.initialize_whole_pose()
+            cart_cli.forth()
+            cart_state = 'forth'
+            myrobot.set_cart_state(cart_state)
+        elif (cart_count + 1) % 2 == 0:
+            myrobot.initialize_whole_pose()
+            cart_cli.back()
+            cart_state = 'back'
+            myrobot.set_cart_state(cart_state)
+        cart_count += 1
+
+        myrobot.initialize_whole_pose()
+
         printb("############ Loop start ############")
 
         myrobot.set_container()
@@ -609,11 +654,15 @@ if __name__ == "__main__":
             
             # 右半分にあるキャベツは無視する
             printp("x value : {}".format(obj.center_pose.pose.position.x))
-            if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
-                is_detect_successed = True
+            if cart_state == 'forth':
+                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
+                    is_detect_successed = True
+            else:
+                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x <= 1.15:
+                    is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
-            if obj.contact in [3, 6, 12, 9]:
-                is_detect_successed = False 
+            # if obj.contact in [3, 6, 12, 9]:
+            #     is_detect_successed = False 
 
             printy("is_detect_successed : {}".format(is_detect_successed))
             # approach 
@@ -636,8 +685,23 @@ if __name__ == "__main__":
                 is_pick_successed = False
 
             if is_pick_successed:
-                printp("=== left arm end ===")
-                break
+                skip_initialize_msg.data = True
+                skip_initialize_pub.publish(skip_initialize_msg)
+                myrobot.initialize_current_pose()
+                print("peril status", myrobot.is_in_peril())
+                if not myrobot.is_in_peril():
+                    printp("=== left arm end ===")
+                    skip_initialize_msg.data = False
+                    skip_initialize_pub.publish(skip_initialize_msg)
+                    break
+                myrobot.set_peril(False)
+                skip_initialize_msg.data = False
+                skip_initialize_pub.publish(skip_initialize_msg)
+                myrobot.initialize_current_pose()
+            # if is_pick_successed:
+            #     print("peril status", myrobot.is_in_peril)
+            #     printp("=== left arm end ===")
+            #     break
 
             if not is_approach_successed or not is_pick_successed:
                 obj_center = obj.center.uv
@@ -649,7 +713,7 @@ if __name__ == "__main__":
 
         # myrobot.initialize_current_pose(wait=False)
         myrobot.initialize_current_pose()
-        hand_emergency_enable_msg.data = False
+        hand_emergency_enable_msg.data = [0, 0]
         hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 
@@ -675,11 +739,15 @@ if __name__ == "__main__":
             is_detect_successed = False
             
             # 左半分にあるキャベツは無視する
-            if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
-                is_detect_successed = True 
+            if cart_state == 'forth':
+                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
+                    is_detect_successed = True 
+            else:
+                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x <= 1.15:
+                    is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
-            if obj.contact in [3, 6, 12, 9]:
-                is_detect_successed = False 
+            # if obj.contact in [3, 6, 12, 9]:
+            #     is_detect_successed = False 
 
             # approach 
             is_approach_successed = False
@@ -700,20 +768,38 @@ if __name__ == "__main__":
             if myrobot.is_in_peril():
                 is_pick_successed = False
 
+
+
             if is_pick_successed:
-                printp("=== right arm end ===")
-                break
+                skip_initialize_msg.data = True
+                skip_initialize_pub.publish(skip_initialize_msg)
+                myrobot.initialize_current_pose()
+                print("peril status", myrobot.is_in_peril())
+                if not myrobot.is_in_peril():
+                    printp("=== right arm end ===")
+                    skip_initialize_msg.data = False
+                    skip_initialize_pub.publish(skip_initialize_msg)
+                    break
+                myrobot.set_peril(False)
+                skip_initialize_msg.data = False
+                skip_initialize_pub.publish(skip_initialize_msg)
+
+            # if is_pick_successed:
+            #     printp("=== right arm end ===")
+            #     break
 
             if not is_approach_successed or not is_pick_successed:
                 obj_center = obj.center.uv
-                myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
+                if obj_center[0] != 0 or obj_center[1] != 0:
+                    myrobot.add_exclusion_cabbage(obj_center[0], obj_center[1])
             else:
                 myrobot.add_exclusion_cabbage(-1, -1)
  
             myrobot.initialize_whole_pose()
 
         myrobot.initialize_current_pose()
-        hand_emergency_enable_msg.data = False
+        print("now peril status : ", myrobot.is_in_peril)
+        hand_emergency_enable_msg.data = [0, 0]
         hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
 
@@ -733,7 +819,6 @@ if __name__ == "__main__":
         printg("will initialize")
 
         myrobot.set_robot_status_good()
-        myrobot.initialize_whole_pose()
 
         hand_pub = rospy.Publisher('/hand_ref_pressure', Float64MultiArray, queue_size=1)
         hand_msg = Float64MultiArray()
@@ -741,3 +826,5 @@ if __name__ == "__main__":
         hand_pub.publish(hand_msg)
 
         printg("initialized!!")
+
+

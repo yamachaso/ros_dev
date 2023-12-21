@@ -39,7 +39,7 @@ class CartBackandforthServer:
                     cmd = Twist()
 
                     if back:
-                        if x < 1.62:
+                        if x < 1.46:
                             cmd.linear.x = - self.speed
                         else:
                             is_goal = True
