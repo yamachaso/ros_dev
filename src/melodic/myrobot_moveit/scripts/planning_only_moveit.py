@@ -613,12 +613,12 @@ if __name__ == "__main__":
     cart_cli =  CartBackandforthServerClient()
 
     while not rospy.is_shutdown():
-        if cart_count % 2 == 0:
+        if cart_count % 6 == 0:
             myrobot.initialize_whole_pose()
             cart_cli.forth()
             cart_state = 'forth'
             myrobot.set_cart_state(cart_state)
-        elif (cart_count + 1) % 2 == 0:
+        elif (cart_count + 3) % 6 == 0:
             myrobot.initialize_whole_pose()
             cart_cli.back()
             cart_state = 'back'
@@ -658,7 +658,7 @@ if __name__ == "__main__":
                 if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
                     is_detect_successed = True
             else:
-                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x <= 1.15:
+                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x <= 1.55:
                     is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
             # if obj.contact in [3, 6, 12, 9]:
@@ -743,7 +743,7 @@ if __name__ == "__main__":
                 if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
                     is_detect_successed = True 
             else:
-                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x <= 1.15:
+                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x <= 1.55:
                     is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
             # if obj.contact in [3, 6, 12, 9]:
@@ -798,7 +798,7 @@ if __name__ == "__main__":
             myrobot.initialize_whole_pose()
 
         myrobot.initialize_current_pose()
-        print("now peril status : ", myrobot.is_in_peril)
+        print("now peril status : ", myrobot.is_in_peril())
         hand_emergency_enable_msg.data = [0, 0]
         hand_emergency_enable_pub.publish(hand_emergency_enable_msg)
         myrobot.clear_exclusion_cabbage()
