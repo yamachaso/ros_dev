@@ -213,10 +213,10 @@ class MoveGroupHandler:
             # self.hand_msg.data[arm_index] = 1.5
             # self.hand_pub.publish(self.hand_msg)
             if arm_index == 0:
-                self.hand_left_msg.data = 1.3
+                self.hand_left_msg.data = 1.6
                 self.hand_left_pub.publish(self.hand_left_msg)
             else:
-                self.hand_right_msg.data = 1.3
+                self.hand_right_msg.data = 1.4
                 self.hand_right_pub.publish(self.hand_right_msg)
 
             printb("grabed")
@@ -497,6 +497,7 @@ class Myrobot:
         container_name = 'container'
 
         container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/close.dae'
+        # container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/open.dae'
         self.scene_handler.add_mesh(container_name, container_pose, container_filename, size=(0.001, 0.001, 0.001))
 
     def delete_container(self):
@@ -655,10 +656,10 @@ if __name__ == "__main__":
             # 右半分にあるキャベツは無視する
             printp("x value : {}".format(obj.center_pose.pose.position.x))
             if cart_state == 'forth':
-                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x > 1.1:
+                if obj.center_pose.pose.position.y >= -0.01  and obj.center_pose.pose.position.x > 1.1:
                     is_detect_successed = True
             else:
-                if obj.center_pose.pose.position.y >= -0.03  and obj.center_pose.pose.position.x <= 1.55:
+                if obj.center_pose.pose.position.y >= -0.01  and obj.center_pose.pose.position.x <= 1.55:
                     is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
             # if obj.contact in [3, 6, 12, 9]:
@@ -740,10 +741,10 @@ if __name__ == "__main__":
             
             # 左半分にあるキャベツは無視する
             if cart_state == 'forth':
-                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x > 1.1:
+                if obj.center_pose.pose.position.y <= 0.01 and obj.center_pose.pose.position.x > 1.1:
                     is_detect_successed = True 
             else:
-                if obj.center_pose.pose.position.y <= 0.03 and obj.center_pose.pose.position.x <= 1.55:
+                if obj.center_pose.pose.position.y <= 0.01 and obj.center_pose.pose.position.x <= 1.55:
                     is_detect_successed = True 
             # 角にあるキャベツは無視 / 一時的な対応にしたい
             # if obj.contact in [3, 6, 12, 9]:

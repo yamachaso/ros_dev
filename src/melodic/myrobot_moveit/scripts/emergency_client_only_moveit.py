@@ -101,14 +101,14 @@ class EmergencyClient:
             stop_controllers=["{}_cartesian_motion_controller".format(arm), "{}_arm_controller".format(arm)],
             strictness=1, start_asap=False, timeout=0.0)
 
-        rospy.sleep(0.1)
+        rospy.sleep(0.2)
 
         call("/myrobot/{}_arm/controller_manager/switch_controller".format(arm), SwitchController,
             start_controllers=["{}_arm_controller".format(arm)],
             stop_controllers=[""],
             strictness=1, start_asap=True, timeout=5.0)
         
-        rospy.sleep(0.1)
+        rospy.sleep(0.2)
 
         mv_arm = MoveGroup("{}_arm".format(arm))
         mv_arm.set_max_velocity_scaling_factor(0.5)
