@@ -13,8 +13,8 @@
                 <arg name="file" value="rs_camera.launch" />
                 <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_1) camera:=left_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true color_fps:=30 infra1_fps:=30 infra2_fps:=30 depth_fps:=30" /> -->
                 <!--  ordered_pc:=true を入れないと unpack requires a buffer of 4 bytes というエラーが出る  -->
-                <arg name="value" value="serial_no:=$(arg camera_serial_no_1) camera:=left_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" />
-                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_1) camera:=left_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" /> -->
+                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_1) camera:=left_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" /> -->
+                <arg name="value" value="serial_no:=$(arg camera_serial_no_1) camera:=left_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" />
             </include>
         </group>
         <group if="$(eval camera_serial_no_2 != '')">
@@ -23,8 +23,8 @@
                 <arg name="pkg" value="realsense2_camera" />
                 <arg name="file" value="rs_camera.launch" />
                 <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_2) camera:=right_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true color_fps:=30 infra1_fps:=30 infra2_fps:=30 depth_fps:=30" /> -->
-                <arg name="value" value="serial_no:=$(arg camera_serial_no_2) camera:=right_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" />
-                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_2) camera:=right_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" /> -->
+                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_2) camera:=right_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" /> -->
+                <arg name="value" value="serial_no:=$(arg camera_serial_no_2) camera:=right_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" />
             </include>
         </group>
         <group if="$(eval camera_serial_no_3 != '')">
@@ -33,8 +33,8 @@
                 <arg name="pkg" value="realsense2_camera" />
                 <arg name="file" value="rs_camera.launch" />
                 <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_3) camera:=body_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true color_fps:=30 infra1_fps:=30 infra2_fps:=30 depth_fps:=30" /> -->
-                <arg name="value" value="serial_no:=$(arg camera_serial_no_3) camera:=body_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" />
-                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_3) camera:=body_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" /> -->
+                <!-- <arg name="value" value="serial_no:=$(arg camera_serial_no_3) camera:=body_camera align_depth:=true filters:=spatial,temporal,hole_filling,pointcloud ordered_pc:=true" /> -->
+                <arg name="value" value="serial_no:=$(arg camera_serial_no_3) camera:=body_camera align_depth:=true filters:=spatial,temporal,pointcloud ordered_pc:=true" />
             </include>
         </group>
     </group>

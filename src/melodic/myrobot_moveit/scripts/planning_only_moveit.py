@@ -216,7 +216,7 @@ class MoveGroupHandler:
                 self.hand_left_msg.data = 1.6
                 self.hand_left_pub.publish(self.hand_left_msg)
             else:
-                self.hand_right_msg.data = 1.4
+                self.hand_right_msg.data = 1.5
                 self.hand_right_pub.publish(self.hand_right_msg)
 
             printb("grabed")
@@ -496,8 +496,8 @@ class Myrobot:
         container_pose.pose.position.z = res.point.z
         container_name = 'container'
 
-        container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/close.dae'
-        # container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/open.dae'
+        # container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/close.dae'
+        container_filename = '/home/shin/catkin_ws/src/myrobot_description/urdf/container/open.dae'
         self.scene_handler.add_mesh(container_name, container_pose, container_filename, size=(0.001, 0.001, 0.001))
 
     def delete_container(self):
@@ -616,13 +616,13 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         if cart_count % 6 == 0:
             myrobot.initialize_whole_pose()
-            cart_cli.forth()
-            cart_state = 'forth'
+            cart_cli.back()
+            cart_state = 'back'
             myrobot.set_cart_state(cart_state)
         elif (cart_count + 3) % 6 == 0:
             myrobot.initialize_whole_pose()
-            cart_cli.back()
-            cart_state = 'back'
+            cart_cli.forth()
+            cart_state = 'forth'
             myrobot.set_cart_state(cart_state)
         cart_count += 1
 
